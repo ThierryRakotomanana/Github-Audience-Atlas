@@ -39,20 +39,34 @@ function App() {
   }
 
   const [userFollowers, setUserFollowers] = useState<z.infer< typeof GitHubUserSchema>[]>()
+  const [userFollowing, setUserFollowing] = useState<z.infer< typeof GitHubUserSchema>[]>()
 
-  const getFollowers = async () => {
-    const response = await fetch('https://api.github.com/users/ThierryRakotomanana/followers')
-    if (!response.ok) return Error("Newtork problem")
+  const fetchGithubUserData = async (dataType : string) : Promise<z.infer< typeof GitHubUserSchema>[]> => {
+    const response = await fetch(`https://api.github.com/users/ThierryRakotomanana/${dataType}`)
+    if (!response.ok) throw Error("Newtork problem")
     const rawData = await response.json()
-    const userData = z.array(GitHubUserSchema).parse(rawData);
-    setUserFollowers(userData)
+    return z.array(GitHubUserSchema).parse(rawData);
+
+  }
+
+  const getUserData = async (call : string) => {
+    const result = await fetchGithubUserData(call)
+    call == `followers` ? setUserFollowers(result) : setUserFollowing(result)
+    
   }
   return (
     <>
+<<<<<<< HEAD
     <button onClick={ () => getFollowers()}>Here we are</button>
     <div>{userFollowers && userFollowers.map((followers)=> <div>{followers.type}</div>)}</div>
     <button onClick={()=> getUserLocation(`ThierryRakotomanana`)}>Get Location</button>
     <div> {location} </div>
+=======
+    <button onClick={ () => getUserData(`followers`)}>Get follower's names</button>
+    <div>{userFollowers && userFollowers.map((followers)=> <div>{followers.login}</div>)}</div>
+    <button onClick={ () => getUserData(`following`)}>get following's name</button>
+    <div>{userFollowing && userFollowing.map((following)=> <div>{following.login}</div>)}</div>
+>>>>>>> f16ed4d (feat: add user's following handler)
     </>
   )
 }
