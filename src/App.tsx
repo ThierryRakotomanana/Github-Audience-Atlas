@@ -56,17 +56,12 @@ function App() {
   }
   return (
     <>
-<<<<<<< HEAD
-    <button onClick={ () => getFollowers()}>Here we are</button>
-    <div>{userFollowers && userFollowers.map((followers)=> <div>{followers.type}</div>)}</div>
     <button onClick={()=> getUserLocation(`ThierryRakotomanana`)}>Get Location</button>
     <div> {location} </div>
-=======
     <button onClick={ () => getUserData(`followers`)}>Get follower's names</button>
     <div>{userFollowers && userFollowers.map((followers)=> <div>{followers.login}</div>)}</div>
     <button onClick={ () => getUserData(`following`)}>get following's name</button>
     <div>{userFollowing && userFollowing.map((following)=> <div>{following.login}</div>)}</div>
->>>>>>> f16ed4d (feat: add user's following handler)
     </>
   )
 }
