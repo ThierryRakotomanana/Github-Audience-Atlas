@@ -5,14 +5,17 @@ import { GitHubUserSchema, userLocationSchema, type GitHubUser, type GithubLocat
 
 function App() {
   const [location, setLocation] = useState<GithubLocation>()
+  
+  const getUserLocation = async(githubUsername : string) => {
+  const response = await fetchUserLocation(githubUsername)
+  setLocation(response)
+  }
 
-  const getUserLocation = async(githubUsername : string): Promise<string> => {
+  const fetchUserLocation = async(githubUsername : string): Promise<GithubLocation> => {
   const response = await fetch(`https://api.github.com/users/${githubUsername}`)
   if (!response.ok) throw new Error('Network error')
   const { location } = await response.json()
-  const raw = z.parse(userLocationSchema, location)
-  setLocation(raw)
-  return raw
+  return z.parse(userLocationSchema, location)
   }
 
   const [userFollowers, setUserFollowers] = useState<GitHubUser[]>()
