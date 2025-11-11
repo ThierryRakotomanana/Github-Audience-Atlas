@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 import { type GitHubUser, type GithubLocation } from './types/github'
-import { fetchGithubUserData, fetchUserLocation } from './lib/github'
+import { fetchGithubUserData, fetchUserLocation } from './api/github'
 
 function App() {
   const [location, setLocation] = useState<GithubLocation>()
