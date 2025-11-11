@@ -26,8 +26,11 @@ export const GitHubUserSchema = z.object({
   site_admin:          z.boolean(),
 });
 
+type GitHubUser = z.infer< typeof GitHubUserSchema>
+type Location = z.infer<typeof userLocationSchema>
+
 function App() {
-  const [location, setLocation] = useState<z.infer<typeof userLocationSchema>>()
+  const [location, setLocation] = useState<Location>()
 
   const getUserLocation = async(githubUsername : string): Promise<string> => {
   const response = await fetch(`https://api.github.com/users/${githubUsername}`)
@@ -38,10 +41,10 @@ function App() {
   return raw
   }
 
-  const [userFollowers, setUserFollowers] = useState<z.infer< typeof GitHubUserSchema>[]>()
-  const [userFollowing, setUserFollowing] = useState<z.infer< typeof GitHubUserSchema>[]>()
+  const [userFollowers, setUserFollowers] = useState<GitHubUser[]>()
+  const [userFollowing, setUserFollowing] = useState<GitHubUser[]>()
 
-  const fetchGithubUserData = async (dataType : string) : Promise<z.infer< typeof GitHubUserSchema>[]> => {
+  const fetchGithubUserData = async (dataType : string) : Promise<GitHubUser[]> => {
     const response = await fetch(`https://api.github.com/users/ThierryRakotomanana/${dataType}`)
     if (!response.ok) throw Error("Newtork problem")
     const rawData = await response.json()
