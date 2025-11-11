@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import './App.css'
-import { type GitHubUser, type GithubLocation } from './types/github'
+import { type GithubUser, type GithubLocation } from './types/api.types'
 import { fetchGithubUserData, fetchUserLocation } from './api/github'
 
 function App() {
   const [location, setLocation] = useState<GithubLocation>()
-  const [userFollowers, setUserFollowers] = useState<GitHubUser[]>()
-  const [userFollowing, setUserFollowing] = useState<GitHubUser[]>()
+  const [userFollowers, setUserFollowers] = useState<GithubUser[]>()
+  const [userFollowing, setUserFollowing] = useState<GithubUser[]>()
 
   const getUserData = async (call : string) => {
     const result = await fetchGithubUserData(call)
