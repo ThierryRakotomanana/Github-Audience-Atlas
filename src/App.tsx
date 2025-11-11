@@ -1,36 +1,10 @@
 import { useState } from 'react'
 import * as z from 'zod'
 import './App.css'
-
-const userLocationSchema = z.string()
-
-export const GitHubUserSchema = z.object({
-  login:               z.string(),
-  id:                  z.number(),
-  node_id:             z.string(),
-  avatar_url:          z.url(),
-  gravatar_id:         z.string(),
-  url:                 z.url(),
-  html_url:            z.url(),
-  followers_url:       z.url(),
-  following_url:       z.url(),
-  gists_url:           z.url(),
-  starred_url:         z.url(),
-  subscriptions_url:   z.url(),
-  organizations_url:   z.url(),
-  repos_url:           z.url(),
-  events_url:          z.url(),
-  received_events_url: z.url(),
-  type:                z.enum(['User', 'Organization', 'Bot']),
-  user_view_type:      z.string(),
-  site_admin:          z.boolean(),
-});
-
-type GitHubUser = z.infer< typeof GitHubUserSchema>
-type Location = z.infer<typeof userLocationSchema>
+import { GitHubUserSchema, userLocationSchema, type GitHubUser, type GithubLocation } from './types/github'
 
 function App() {
-  const [location, setLocation] = useState<Location>()
+  const [location, setLocation] = useState<GithubLocation>()
 
   const getUserLocation = async(githubUsername : string): Promise<string> => {
   const response = await fetch(`https://api.github.com/users/${githubUsername}`)
