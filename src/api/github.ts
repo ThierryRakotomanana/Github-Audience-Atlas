@@ -10,7 +10,7 @@ export const fetchUserLocation = async(githubUsername : string): Promise<GithubL
 }
 
 export const fetchGithubUserData = async (dataType : string) : Promise<GithubUser[]> => {
-    const response = await fetch(`${GITHUB_CONFIGURATION.apiBase}/users/ThierryRakotomanana/${dataType}`)
+    const response = await fetch(`${GITHUB_CONFIGURATION.apiBase}/users/ThierryRakotomanana/${dataType}?per_page=100`)
     if (!response.ok) throw Error("Newtork problem")
     const rawData = await response.json()
     return z.array(GithubUserSchema).parse(rawData);
