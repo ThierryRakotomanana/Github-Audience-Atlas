@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './App.css'
-import { type GithubUser, type GithubLocation } from './types/api.types'
+import { type GithubUser, type GithubLocation, type AudienceType } from './types/api.types'
 import { fetchAllPages, fetchUserLocation } from './api/github'
 
 function App() {
@@ -8,7 +8,7 @@ function App() {
   const [userFollowers, setUserFollowers] = useState<GithubUser[]>()
   const [userFollowing, setUserFollowing] = useState<GithubUser[]>()
 
-  const getUserData = async (call : 'followers'|'following') => {
+  const getUserData = async (call : AudienceType) => {
     const result = await fetchAllPages(call)
     call == `followers` ? setUserFollowers(result) : setUserFollowing(result)
     

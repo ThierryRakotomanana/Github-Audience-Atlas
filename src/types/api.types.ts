@@ -40,3 +40,5 @@ export const GithubProfileSchema = z.union([GithubUserSchema, z.object({
 export type GithubUser     = z.infer<typeof GithubUserSchema>;
 export type GithubProfile  = z.infer<typeof GithubProfileSchema>;
 export type GithubLocation = z.infer<typeof LocationSchema>;
+
+export type AudienceType = 'followers' | 'following'
