@@ -1,32 +1,43 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
-import { type GithubUser, type GithubLocation, type AudienceType } from './types/api.types'
-import { fetchAllPages, fetchUserLocation } from './api/github'
+import { type GithubUser } from './types/api.types'
+import { fetchAllPages } from './api/github'
+import { GithubExplorer } from './components/GithubExplorer'
 
 function App() {
-  const [location, setLocation] = useState<GithubLocation>()
   const [userFollowers, setUserFollowers] = useState<GithubUser[]>()
   const [userFollowing, setUserFollowing] = useState<GithubUser[]>()
+  const [ghosts, setGhosts] = useState<GithubUser[]>()
 
-  const getUserData = async (call : AudienceType) => {
-    const result = await fetchAllPages(call)
-    call == `followers` ? setUserFollowers(result) : setUserFollowing(result)
-    
-  }
-  
-  const getUserLocation = async(githubUsername : string) => {
-  const response = await fetchUserLocation(githubUsername)
-  setLocation(response)
-  }
+  useEffect(() => {
+    async function fechAudience() {
+      const [followers, following] = await Promise.all([
+        await fetchAllPages('followers'),
+        await fetchAllPages('following')
+      ])
+      setUserFollowers(followers)
+      setUserFollowing(following)
+      
+      const isGhost = new Map<number, GithubUser>()
+
+      followers.map((follower)=> {
+        isGhost.set(follower.id, follower)
+      })
+
+      setGhosts(() => {
+        const ghosts = following.filter((following)=> {
+          if (!isGhost.has(following.id)) return following
+        })
+        return ghosts
+      })
+    }
+    fechAudience()
+  },[])
 
   return (
     <>
-    <button onClick={()=> getUserLocation(`ThierryRakotomanana`)}>Get Location</button>
-    <div> {location} </div>
-    <button onClick={ () => getUserData(`followers`)}>Get follower's names</button>
-    <div>{userFollowers && userFollowers.map((followers)=> <div>{followers.login}</div>)}</div>
-    <button onClick={ () => getUserData(`following`)}>get following's name</button>
-    <div>{userFollowing && userFollowing.map((following)=> <div>{following.login}</div>)}</div>
+    <div> { userFollowers && userFollowing && ghosts && <GithubExplorer followers={userFollowers} following={userFollowing} ghosts={ghosts}/>}
+    </div>
     </>
   )
 }
