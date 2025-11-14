@@ -17,17 +17,12 @@ export const fetchGithubUserData = async (RequestType : 'followers'|'following',
 }
 
 export const fetchAllPages = async(RequestType : 'followers'|'following') : Promise<GithubUser[]> => {
-  let calling = true
-  let page = 1, Users : GithubUser[] = []
-  while(calling) {
-    const audience = await fetchGithubUserData(RequestType, page)
-    Users = [...Users, ...audience]
-    if(audience.length == 0 ){ 
-      calling = false
-    }
-    console.log(page)
+  let page = 1, userAudience : GithubUser[] = []
+  while(true) {
+    const audiences = await fetchGithubUserData(RequestType, page)
+    userAudience = [...userAudience, ...audiences]
+    if(audiences.length == 0 || audiences.length < 100 ) break
     page++
   }
-  console.dir(Users)
-  return Users
+  return userAudience
 } 
