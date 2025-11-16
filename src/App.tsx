@@ -1,35 +1,30 @@
 import { useEffect, useState } from 'react';
 import './App.css';
-import { type GithubUser } from './types/api.types';
-import { fetchAllPages } from './api/github';
+import { type GithubProfile, type GithubUser } from './types/api.types';
+import { fetchAllPages, fetchUserProfile } from './api/github';
 import { GithubExplorer } from './components/GithubExplorer';
 
 function App() {
   const [userFollowers, setUserFollowers] = useState<GithubUser[]>();
   const [userFollowing, setUserFollowing] = useState<GithubUser[]>();
   const [ghosts, setGhosts] = useState<GithubUser[]>();
-
+  const [user, setUser] = useState<GithubProfile>();
+  const userName = `ThierryRakotomanana`;
   useEffect(() => {
     async function fechAudience() {
-      const [followers, following] = await Promise.all([
-        await fetchAllPages('followers'),
-        await fetchAllPages('following'),
+      const [followers, following, user] = await Promise.all([
+        await fetchAllPages(userName, 'followers'),
+        await fetchAllPages(userName, 'following'),
+        await fetchUserProfile(userName),
       ]);
       setUserFollowers(followers);
       setUserFollowing(following);
+      setUser(user);
 
-      const isGhost = new Map<number, GithubUser>();
-
-      followers.map((follower) => {
-        isGhost.set(follower.id, follower);
-      });
-
-      setGhosts(() => {
-        const ghosts = following.filter((following) => {
-          if (!isGhost.has(following.id)) return following;
-        });
-        return ghosts;
-      });
+      const isGhost = new Set<number>(followers.map((follower) => follower.id));
+      setGhosts(() =>
+        following.filter((following) => !isGhost.has(following.id)),
+      );
     }
     fechAudience();
   }, []);
@@ -37,7 +32,8 @@ function App() {
   return (
     <>
       <div>
-        {' '}
+        {user &&
+          ` Here you are  :  ${user?.name} You have ${user?.followers} followers and ${user?.following} following`}
         {userFollowers && userFollowing && ghosts && (
           <GithubExplorer
             followers={userFollowers}
