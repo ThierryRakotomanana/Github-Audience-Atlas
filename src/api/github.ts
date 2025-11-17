@@ -29,7 +29,7 @@ export const fetchUserProfile = async (
 
 export const githubFetch = async (
   endPoint: string,
-  token?: string,
+  token: string = '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',
   params?: Record<string, number | string>,
 ): Promise<Response> => {
   const url = new URL(`${GITHUB_CONFIG.apiBase}/${endPoint}`);
@@ -82,7 +82,7 @@ export const fetchGithubUserData = async (
 export const fetchAllPages = async (
   githubUser: string,
   audienceType: AudienceType,
-  token?: string,
+  token: string,
 ): Promise<GithubUser[]> => {
   const path = `users/${githubUser}/${audienceType}`;
   let page = 1,
