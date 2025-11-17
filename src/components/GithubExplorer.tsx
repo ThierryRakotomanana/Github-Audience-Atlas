@@ -1,9 +1,9 @@
-import type { GithubUser } from '../types/api.types';
+import type { GithubProfile } from '../types/api.types';
 
 type AudienceProps = {
-  followers: GithubUser[];
-  following: GithubUser[];
-  ghosts: GithubUser[];
+  followers: GithubProfile[];
+  following: GithubProfile[];
+  ghosts: GithubProfile[];
 };
 
 export const GithubExplorer = (audience: AudienceProps) => {
@@ -16,6 +16,7 @@ export const GithubExplorer = (audience: AudienceProps) => {
             <div>
               <img style={{ width: `40px` }} src={follower.avatar_url} alt="" />
               <a href={follower.url}> {follower.login} </a>
+              <span>{follower.location}</span>
             </div>
           );
         })}
@@ -31,6 +32,7 @@ export const GithubExplorer = (audience: AudienceProps) => {
                 alt=""
               />
               <a href={following.url}> {following.login} </a>
+              <span>{following.location}</span>
             </div>
           );
         })}
@@ -43,6 +45,7 @@ export const GithubExplorer = (audience: AudienceProps) => {
               <div>
                 <img style={{ width: `40px` }} src={ghost.avatar_url} alt="" />
                 <a href={ghost.url}> {ghost.login} </a>
+                <span>{ghost.location}</span>
               </div>
             );
           })}

@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import './App.css';
-import { type GithubProfile, type GithubUser } from './types/api.types';
+import { type GithubProfile } from './types/api.types';
 import { fetchAllPages, fetchUserProfile } from './api/github';
 import { GithubExplorer } from './components/GithubExplorer';
 
 function App() {
-  const [userFollowers, setUserFollowers] = useState<GithubUser[]>();
-  const [userFollowing, setUserFollowing] = useState<GithubUser[]>();
-  const [ghosts, setGhosts] = useState<GithubUser[]>();
+  const [userFollowers, setUserFollowers] = useState<GithubProfile[]>();
+  const [userFollowing, setUserFollowing] = useState<GithubProfile[]>();
+  const [ghosts, setGhosts] = useState<GithubProfile[]>();
   const [user, setUser] = useState<GithubProfile>();
   const userName = `ThierryRakotomanana`;
   useEffect(() => {
@@ -17,13 +17,28 @@ function App() {
         await fetchAllPages(userName, 'following'),
         await fetchUserProfile(userName),
       ]);
-      setUserFollowers(followers);
-      setUserFollowing(following);
       setUser(user);
+
+      const followerProfiles = await Promise.all(
+        followers.map(async (follower) => {
+          return await fetchUserProfile(follower.login);
+        }),
+      );
+
+      const followingProfiles = await Promise.all(
+        following.map(async (following) => {
+          return await fetchUserProfile(following.login);
+        }),
+      );
+
+      setUserFollowers(followerProfiles);
+      setUserFollowing(followingProfiles);
+
+      //need to make followers to Profile
 
       const isGhost = new Set<number>(followers.map((follower) => follower.id));
       setGhosts(() =>
-        following.filter((following) => !isGhost.has(following.id)),
+        followingProfiles.filter((following) => !isGhost.has(following.id)),
       );
     }
     fechAudience();
@@ -33,7 +48,7 @@ function App() {
     <>
       <div>
         {user &&
-          ` Here you are  :  ${user?.name} You have ${user?.followers} followers and ${user?.following} following`}
+          ` Here you are  :  ${user.name} You have ${user.followers} followers and ${user.following} following`}
         {userFollowers && userFollowing && ghosts && (
           <GithubExplorer
             followers={userFollowers}
