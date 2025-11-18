@@ -35,7 +35,7 @@ function App() {
 
       setUser(user);
 
-      const fetchAllProfiles = async (
+      const fetchAudiencesProfiles = async (
         audiences: GithubUser[],
       ): Promise<GithubProfile[]> => {
         return await Promise.all(
@@ -44,8 +44,8 @@ function App() {
           }),
         );
       };
-      const followerProfiles = await fetchAllProfiles(followers);
-      const followingProfiles = await fetchAllProfiles(following);
+      const followerProfiles = await fetchAudiencesProfiles(followers);
+      const followingProfiles = await fetchAudiencesProfiles(following);
 
       setUserFollowers(followerProfiles);
       setUserFollowing(followingProfiles);
