@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import './App.css';
-import { type GithubProfile } from './types/api.types';
+import { type GithubProfile, type GithubUser } from './types/api.types';
 import { fetchAllPages, fetchUserProfile } from './api/github';
 import { GithubExplorer } from './components/GithubExplorer';
 import Credentials from './components/Credentials';
@@ -32,19 +32,20 @@ function App() {
         await fetchAllPages(credentials.user, 'following', credentials.token),
         await fetchUserProfile(credentials.user),
       ]);
+
       setUser(user);
 
-      const followerProfiles = await Promise.all(
-        followers.map(async (follower) => {
-          return await fetchUserProfile(follower.login);
-        }),
-      );
-
-      const followingProfiles = await Promise.all(
-        following.map(async (following) => {
-          return await fetchUserProfile(following.login);
-        }),
-      );
+      const fetchAllProfiles = async (
+        audiences: GithubUser[],
+      ): Promise<GithubProfile[]> => {
+        return await Promise.all(
+          audiences.map(async (audience) => {
+            return await fetchUserProfile(audience.login);
+          }),
+        );
+      };
+      const followerProfiles = await fetchAllProfiles(followers);
+      const followingProfiles = await fetchAllProfiles(following);
 
       setUserFollowers(followerProfiles);
       setUserFollowing(followingProfiles);
