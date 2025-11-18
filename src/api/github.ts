@@ -98,3 +98,13 @@ export const fetchAllPages = async (
   }
   return allAudiences;
 };
+
+export const fetchAudiencesProfiles = async (
+  audiences: GithubUser[],
+): Promise<GithubProfile[]> => {
+  return await Promise.all(
+    audiences.map(async (audience) => {
+      return await fetchUserProfile(audience.login);
+    }),
+  );
+};
