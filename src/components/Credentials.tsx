@@ -4,12 +4,12 @@ import {
   type CSSProperties,
   type SubmitEvent,
 } from 'react';
-import type { Crendentials } from '../App';
+import type { Credentials } from '../types/api.types';
 
 const CredentialForm = (props: {
-  handleCredentials: (credentials: Crendentials) => void;
+  handleCredentials: (credentials: Credentials) => void;
 }) => {
-  const [formData, setFormData] = useState<Crendentials>({
+  const [formData, setFormData] = useState<Credentials>({
     user: '',
     token: '',
   });

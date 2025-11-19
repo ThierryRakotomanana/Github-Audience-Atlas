@@ -7,20 +7,19 @@ import {
   fetchUserProfile,
 } from './api/github';
 import { GithubExplorer } from './components/GithubExplorer';
-import Credentials from './components/Credentials';
-
-export type Crendentials = { user: string; token: string };
+import type { Credentials } from './types/api.types';
+import CredentialForm from './components/Credentials';
 
 function App() {
   const [userFollowers, setUserFollowers] = useState<GithubProfile[]>();
   const [userFollowing, setUserFollowing] = useState<GithubProfile[]>();
   const [ghosts, setGhosts] = useState<GithubProfile[]>();
   const [user, setUser] = useState<GithubProfile>();
-  const [credentials, setCredential] = useState<Crendentials>({
+  const [credentials, setCredential] = useState<Credentials>({
     user: '',
     token: '',
   });
-  const handleCredentials = (credentials: Crendentials) => {
+  const handleCredentials = (credentials: Credentials) => {
     setCredential({ ...credentials });
   };
   const [loading, setLoading] = useState<Boolean>(true);
@@ -32,8 +31,8 @@ function App() {
     if (!credentials.user) return;
     async function fechAudience() {
       const [followers, following, user] = await Promise.all([
-        await fetchAllPages(credentials.user, 'followers', credentials.token),
-        await fetchAllPages(credentials.user, 'following', credentials.token),
+        await fetchAllPages(credentials, 'followers'),
+        await fetchAllPages(credentials, 'following'),
         await fetchUserProfile(credentials.user),
       ]);
 
@@ -60,7 +59,7 @@ function App() {
          * TODO
          * need to refactor this
          **/}
-        <Credentials handleCredentials={handleCredentials} />
+        <CredentialForm handleCredentials={handleCredentials} />
         {loading
           ? `We are still waiting`
           : user &&

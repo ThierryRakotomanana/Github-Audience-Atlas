@@ -42,3 +42,5 @@ export type GithubProfile = z.infer<typeof GithubProfileSchema>;
 export type GithubLocation = z.infer<typeof LocationSchema>;
 
 export type AudienceType = 'followers' | 'following';
+
+export type Credentials = { user: string; token: string };

@@ -5,6 +5,7 @@ import {
   type AudienceType,
   type GithubProfile,
   GithubProfileSchema,
+  type Credentials,
 } from '../types/api.types';
 import { GITHUB_CONFIG } from '../config';
 
@@ -19,17 +20,17 @@ export class GithubApiError extends Error {
 }
 
 export const fetchUserProfile = async (
-  githubUser: string,
+  user: string,
 ): Promise<GithubProfile> => {
-  const endPoint = `users/${githubUser}`;
+  const endPoint = `/users/${user}`;
   const response = await githubFetch(endPoint);
   const data = await response.json();
-  return parseOrThrow(GithubProfileSchema, data);
+  return parseOrThrow(GithubProfileSchema, data, `Profile : ${user}`);
 };
 
 export const githubFetch = async (
   endPoint: string,
-  token: string = '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',
+  token?: string,
   params?: Record<string, number | string>,
 ): Promise<Response> => {
   const url = new URL(`${GITHUB_CONFIG.apiBase}/${endPoint}`);
@@ -59,39 +60,43 @@ export const githubFetch = async (
   return response;
 };
 
-function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
+function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown, ctx: string): T {
   const result = schema.safeParse(data);
   if (!result.success) {
     throw new Error(
-      `Schema validation failed: ${result.error.issues.map((i) => i.message).join(', ')}`,
+      `Schema validation failed ${ctx} : ${result.error.issues.map((i) => i.message).join(', ')}`,
     );
   }
   return result.data;
 }
 
 export const fetchGithubUserData = async (
-  endPoint: string,
-  token?: string,
+  credentials: Credentials,
+  audienceType: AudienceType,
   params?: Record<string, number>,
 ): Promise<GithubUser[]> => {
+  const { user, token } = credentials;
+  const endPoint = `/users/${user}`;
   const response = await githubFetch(endPoint, token, params);
   const rawData = await response.json();
-  return parseOrThrow(z.array(GithubUserSchema), rawData);
+  return parseOrThrow(z.array(GithubUserSchema), rawData, audienceType);
 };
 
 export const fetchAllPages = async (
-  githubUser: string,
+  credentials: Credentials,
   audienceType: AudienceType,
-  token: string,
 ): Promise<GithubUser[]> => {
-  const path = `users/${githubUser}/${audienceType}`;
   let page = 1,
     allAudiences: GithubUser[] = [];
   while (true) {
-    const audienceByPage = await fetchGithubUserData(path, token, {
-      per_page: 100,
-      page,
-    });
+    const audienceByPage = await fetchGithubUserData(
+      credentials,
+      audienceType,
+      {
+        per_page: 100,
+        page,
+      },
+    );
     allAudiences.push(...audienceByPage);
     if (audienceByPage.length < 100) break;
     page++;
