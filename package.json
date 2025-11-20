@@ -13,6 +13,15 @@
 		"preview": "vite preview",
 		"type-check": "tsc --noEmit"
 	},
+	"lint-staged": {
+		"*.{ts,tsx}": [
+			"eslint --fix --max-warnings=0",
+			"prettier --write"
+		],
+		"*.{js,mjs,json,md,css,scss,html}": [
+			"prettier --write"
+		]
+	},
 	"dependencies": {
 		"react": "^19.2.5",
 		"react-dom": "^19.2.5"
