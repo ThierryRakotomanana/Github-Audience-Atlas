@@ -12,7 +12,8 @@
 		"format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,scss}\"",
 		"preview": "vite preview",
 		"type-check": "tsc --noEmit",
-		"prepare": "husky"
+		"prepare": "husky",
+		"test": ""
 	},
 	"lint-staged": {
 		"*.{ts,tsx}": [
@@ -28,6 +29,8 @@
 		"react-dom": "^19.2.5"
 	},
 	"devDependencies": {
+		"@commitlint/cli": "^21.0.1",
+		"@commitlint/config-conventional": "^21.0.1",
 		"@eslint/js": "^10.0.1",
 		"@types/node": "^24.12.2",
 		"@types/react": "^19.2.14",
