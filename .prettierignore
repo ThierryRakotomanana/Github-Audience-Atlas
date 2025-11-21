@@ -140,3 +140,7 @@ dist-ssr
 .yarn/install-state.gz
 .pnp.*
 commitlint.config.js
+CHANGELOG.md
+.nvmrc
+yarn.lock
+package-lock.json
