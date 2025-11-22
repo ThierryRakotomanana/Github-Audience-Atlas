@@ -7,7 +7,7 @@ import {
 	fetchUserProfile
 } from "./api/github";
 import { GithubExplorer } from "./components/GithubExplorer";
-import type { Credentials } from "./types/api.types";
+import type { Credentials, GithubUser } from "./types/api.types";
 import CredentialForm from "./components/CredentialForm";
 
 function App() {
@@ -33,12 +33,27 @@ function App() {
 			const [followers, following, user] = await Promise.all([
 				await fetchAllPages(credentials, "followers"),
 				await fetchAllPages(credentials, "following"),
-				await fetchUserProfile(credentials.user)
+				await fetchUserProfile(credentials)
 			]);
 
 			setUser(user);
-			const followerProfiles = await fetchAudiencesProfiles(followers);
-			const followingProfiles = await fetchAudiencesProfiles(following);
+			const uniqueAudiences = [
+				...new Set([...followers, ...following].map((audience) => audience.login))
+			];
+			const audienceProfiles = await fetchAudiencesProfiles(
+				uniqueAudiences,
+				credentials.token
+			);
+
+			const resolve = (rawAudiences: GithubUser[]): GithubProfile[] => {
+				return rawAudiences.flatMap((rawAudience) => {
+					const profile = audienceProfiles.get(rawAudience.login);
+					return profile ? profile : [];
+				});
+			};
+
+			const followerProfiles = resolve(followers);
+			const followingProfiles = resolve(following);
 
 			setUserFollowers(followerProfiles);
 			setUserFollowing(followingProfiles);

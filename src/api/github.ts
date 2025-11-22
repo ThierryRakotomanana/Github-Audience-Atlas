@@ -19,9 +19,12 @@ export class GithubApiError extends Error {
 	}
 }
 
-export const fetchUserProfile = async (user: string): Promise<GithubProfile> => {
-	const endPoint = `/users/${user}`;
-	const response = await githubFetch(endPoint);
+export const fetchUserProfile = async ({
+	user,
+	token
+}: Credentials): Promise<GithubProfile> => {
+	const endPoint = `users/${user}`;
+	const response = await githubFetch(endPoint, token);
 	const data = await response.json();
 	return parseOrThrow(GithubProfileSchema, data, `Profile : ${user}`);
 };
@@ -74,7 +77,7 @@ export const fetchGithubUserData = async (
 	params?: Record<string, number>
 ): Promise<GithubUser[]> => {
 	const { user, token } = credentials;
-	const endPoint = `/users/${user}`;
+	const endPoint = `users/${user}/${audienceType}`;
 	const response = await githubFetch(endPoint, token, params);
 	const rawData = await response.json();
 	return parseOrThrow(z.array(GithubUserSchema), rawData, audienceType);
@@ -99,11 +102,15 @@ export const fetchAllPages = async (
 };
 
 export const fetchAudiencesProfiles = async (
-	audiences: GithubUser[]
-): Promise<GithubProfile[]> => {
-	return await Promise.all(
-		audiences.map(async (audience) => {
-			return await fetchUserProfile(audience.login);
+	logins: string[],
+	token: string
+): Promise<Map<string, GithubProfile>> => {
+	const profiles = await Promise.all(
+		logins.map(async (login) => {
+			return await fetchUserProfile({ user: login, token });
 		})
 	);
+	const audienceProfiles = new Map<string, GithubProfile>();
+	profiles.map((profile) => audienceProfiles.set(profile.login, profile));
+	return audienceProfiles;
 };
