@@ -8,7 +8,7 @@ import {
 } from "./api/github";
 import { GithubExplorer } from "./components/GithubExplorer";
 import type { Credentials } from "./types/api.types";
-import CredentialForm from "./components/Credentials";
+import CredentialForm from "./components/CredentialForm";
 
 function App() {
 	const [userFollowers, setUserFollowers] = useState<GithubProfile[]>();
