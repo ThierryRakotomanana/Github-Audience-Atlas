@@ -101,15 +101,35 @@ export const fetchAllPages = async (
 	return allAudiences;
 };
 
+export const fetchBySteps = async (
+	audiences: string[],
+	tasks: (() => Promise<GithubProfile>)[],
+	step: number
+): Promise<GithubProfile[]> => {
+	let index: number = 0;
+	const results: GithubProfile[] = [];
+	const worker = async () => {
+		while (index < audiences.length) {
+			results.push(await tasks[index]());
+			index++;
+		}
+		return results;
+	};
+	await Promise.all(
+		Array.from({ length: Math.min(audiences.length, step) }, worker)
+	);
+	return results;
+};
+
 export const fetchAudiencesProfiles = async (
 	logins: string[],
 	token: string
 ): Promise<Map<string, GithubProfile>> => {
-	const profiles = await Promise.all(
-		logins.map(async (login) => {
-			return await fetchUserProfile({ user: login, token });
-		})
-	);
+	const tasks = logins.map((login) => {
+		return async () => await fetchUserProfile({ user: login, token });
+	});
+
+	const profiles = await fetchBySteps(logins, tasks, 60);
 	const audienceProfiles = new Map<string, GithubProfile>();
 	profiles.map((profile) => audienceProfiles.set(profile.login, profile));
 	return audienceProfiles;
