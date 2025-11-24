@@ -19,6 +19,10 @@ function App() {
 		user: "",
 		token: ""
 	});
+	const [steps, setSteps] = useState<{ steps: number; done: boolean }>();
+	const handleSteps = (steps: number, done: boolean) => {
+		setSteps({ steps, done });
+	};
 	const handleCredentials = (credentials: Credentials) => {
 		setCredential({ ...credentials });
 	};
@@ -30,9 +34,14 @@ function App() {
 		if (!credentials.user) return;
 		async function fechAudience() {
 			setLoading(true);
+			// We should get the loading phase of each fetch
+			/**
+			 * Get the followers and following length
+			 *
+			 */
 			const [followers, following, user] = await Promise.all([
-				await fetchAllPages(credentials, "followers"),
-				await fetchAllPages(credentials, "following"),
+				await fetchAllPages(credentials, "followers", handleSteps),
+				await fetchAllPages(credentials, "following", handleSteps),
 				await fetchUserProfile(credentials)
 			]);
 
@@ -42,7 +51,8 @@ function App() {
 			];
 			const audienceProfiles = await fetchAudiencesProfiles(
 				uniqueAudiences,
-				credentials.token
+				credentials.token,
+				handleSteps
 			);
 
 			const resolve = (rawAudiences: GithubUser[]): GithubProfile[] => {
@@ -76,7 +86,7 @@ function App() {
 				 **/}
 				<CredentialForm handleCredentials={handleCredentials} />
 				{loading ?
-					`We are still waiting`
+					`steps : ${steps?.steps} and status: ${steps?.done}`
 				:	user
 					&& ` Here you are  :  ${user.name} You have ${user.followers} followers and ${user.following} following`
 				}

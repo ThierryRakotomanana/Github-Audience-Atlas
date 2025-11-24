@@ -85,9 +85,11 @@ export const fetchGithubUserData = async (
 
 export const fetchAllPages = async (
 	credentials: Credentials,
-	audienceType: AudienceType
+	audienceType: AudienceType,
+	updateSteps: (steps: number, done: boolean) => void
 ): Promise<GithubUser[]> => {
-	let page = 1;
+	let page = 1,
+		steps = 0;
 	const allAudiences: GithubUser[] = [];
 	while (true) {
 		const audienceByPage = await fetchGithubUserData(credentials, audienceType, {
@@ -95,16 +97,20 @@ export const fetchAllPages = async (
 			page
 		});
 		allAudiences.push(...audienceByPage);
+		steps = steps + audienceByPage.length;
 		if (audienceByPage.length < 100) break;
 		page++;
+		updateSteps(steps, false);
 	}
+	updateSteps(steps, true);
 	return allAudiences;
 };
 
 export const fetchBySteps = async (
 	audiences: string[],
 	tasks: (() => Promise<GithubProfile>)[],
-	step: number
+	step: number,
+	updateSteps: (steps: number, done: boolean) => void
 ): Promise<GithubProfile[]> => {
 	let index: number = 0;
 	const results: GithubProfile[] = [];
@@ -112,24 +118,27 @@ export const fetchBySteps = async (
 		while (index < audiences.length) {
 			results.push(await tasks[index]());
 			index++;
+			updateSteps(index, false);
 		}
 		return results;
 	};
 	await Promise.all(
 		Array.from({ length: Math.min(audiences.length, step) }, worker)
 	);
+	updateSteps(results.length, true);
 	return results;
 };
 
 export const fetchAudiencesProfiles = async (
 	logins: string[],
-	token: string
+	token: string,
+	updateSteps: (steps: number, done: boolean) => void
 ): Promise<Map<string, GithubProfile>> => {
 	const tasks = logins.map((login) => {
 		return async () => await fetchUserProfile({ user: login, token });
 	});
 
-	const profiles = await fetchBySteps(logins, tasks, 60);
+	const profiles = await fetchBySteps(logins, tasks, 60, updateSteps);
 	const audienceProfiles = new Map<string, GithubProfile>();
 	profiles.map((profile) => audienceProfiles.set(profile.login, profile));
 	return audienceProfiles;
