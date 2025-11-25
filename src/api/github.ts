@@ -86,10 +86,9 @@ export const fetchGithubUserData = async (
 export const fetchAllPages = async (
 	credentials: Credentials,
 	audienceType: AudienceType,
-	updateSteps: (steps: number, done: boolean) => void
+	onProgress?: (step: number) => void
 ): Promise<GithubUser[]> => {
-	let page = 1,
-		steps = 0;
+	let page = 1;
 	const allAudiences: GithubUser[] = [];
 	while (true) {
 		const audienceByPage = await fetchGithubUserData(credentials, audienceType, {
@@ -97,19 +96,18 @@ export const fetchAllPages = async (
 			page
 		});
 		allAudiences.push(...audienceByPage);
-		steps = steps + audienceByPage.length;
+		onProgress?.(allAudiences.length);
+		await new Promise((param) => setTimeout(param, 120));
 		if (audienceByPage.length < 100) break;
 		page++;
-		updateSteps(steps, false);
 	}
-	updateSteps(steps, true);
 	return allAudiences;
 };
 
 export const fetchBySteps = async (
 	audiences: string[],
 	tasks: (() => Promise<GithubProfile>)[],
-	step: number,
+	concurrency: number,
 	updateSteps: (steps: number, done: boolean) => void
 ): Promise<GithubProfile[]> => {
 	let index: number = 0;
@@ -123,7 +121,7 @@ export const fetchBySteps = async (
 		return results;
 	};
 	await Promise.all(
-		Array.from({ length: Math.min(audiences.length, step) }, worker)
+		Array.from({ length: Math.min(audiences.length, concurrency) }, worker)
 	);
 	updateSteps(results.length, true);
 	return results;
@@ -138,7 +136,7 @@ export const fetchAudiencesProfiles = async (
 		return async () => await fetchUserProfile({ user: login, token });
 	});
 
-	const profiles = await fetchBySteps(logins, tasks, 60, updateSteps);
+	const profiles = await fetchBySteps(logins, tasks, 100, updateSteps);
 	const audienceProfiles = new Map<string, GithubProfile>();
 	profiles.map((profile) => audienceProfiles.set(profile.login, profile));
 	return audienceProfiles;

@@ -11,8 +11,12 @@ function App() {
 		token: ""
 	});
 
-	const { userFollowers, userFollowing, ghosts, user, loading, steps } =
-		useAudience(credentials);
+	const controller = new AbortController();
+
+	const { following, followers, ghosts, user } = useAudience(
+		credentials,
+		controller
+	);
 	const handleCredentials = (credentials: Credentials) => {
 		setCredential({ ...credentials });
 	};
@@ -20,20 +24,13 @@ function App() {
 	return (
 		<>
 			<div>
-				{/**
-				 * TODO
-				 * need to refactor this
-				 **/}
 				<CredentialForm handleCredentials={handleCredentials} />
-				{loading ?
-					`steps : ${steps?.steps} and status: ${steps?.done}`
-				:	user
-					&& ` Here you are  :  ${user.name} You have ${user.followers} followers and ${user.following} following`
-				}
-				{!loading && userFollowers && userFollowing && ghosts && (
+				{user
+					&& ` Here you are  :  ${user.name} You have ${user.followers} followers and ${user.following} following`}
+				{following && followers && ghosts && (
 					<GithubExplorer
-						followers={userFollowers}
-						following={userFollowing}
+						followers={followers}
+						following={following}
 						ghosts={ghosts}
 					/>
 				)}

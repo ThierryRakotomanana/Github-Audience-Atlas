@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import type { Credentials, GithubProfile, GithubUser } from "../types/api.types";
 import {
 	fetchAllPages,
@@ -6,27 +6,73 @@ import {
 	fetchUserProfile
 } from "../api/github";
 
-export function useAudience(credentials: Credentials) {
-	const [userFollowers, setUserFollowers] = useState<GithubProfile[]>();
-	const [userFollowing, setUserFollowing] = useState<GithubProfile[]>();
-	const [ghosts, setGhosts] = useState<GithubProfile[]>();
-	const [user, setUser] = useState<GithubProfile>();
-	const [loading, setLoading] = useState(true);
+type Audiences = {
+	followers: GithubProfile[];
+	following: GithubProfile[];
+	ghosts: GithubProfile[];
+};
+
+type State = {
+	user: GithubProfile | null;
+	audiences: Audiences | null;
+};
+
+type Action =
+	| {
+			type: "USER_RESOLVE";
+			user: GithubProfile;
+	  }
+	| {
+			type: "FINISHED";
+			audiences: Audiences;
+	  };
+
+const INITIAL_STATE: State = {
+	user: null,
+	audiences: null
+};
+
+function reducer(state: State, action: Action): State {
+	switch (action.type) {
+		case "USER_RESOLVE":
+			return {
+				...state,
+				user: action.user
+			};
+
+		case "FINISHED":
+			return {
+				...state,
+				audiences: {
+					...state.audiences,
+					...action.audiences
+				}
+			};
+
+		default:
+			break;
+	}
+	return state;
+}
+
+export function useAudience(credentials: Credentials, controller: AbortController) {
 	const [steps, setSteps] = useState<{ steps: number; done: boolean }>();
 	const handleSteps = (steps: number, done: boolean) => {
 		setSteps({ steps, done });
 	};
+	const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
 
 	useEffect(() => {
 		if (!credentials.user) return;
 		async function fetchAudience() {
-			setLoading(true);
 			const user = await fetchUserProfile(credentials);
+			dispatch({ type: "USER_RESOLVE", user });
+
 			const [followers, following] = await Promise.all([
-				fetchAllPages(credentials, "followers", handleSteps),
-				fetchAllPages(credentials, "following", handleSteps)
+				fetchAllPages(credentials, "followers", (n) => console.log(n)),
+				fetchAllPages(credentials, "following")
 			]);
-			setUser(user);
+
 			const uniqueAudiences = [
 				...new Set([...followers, ...following].map((audience) => audience.login))
 			];
@@ -43,20 +89,30 @@ export function useAudience(credentials: Credentials) {
 				});
 			};
 
-			const followerProfiles = resolve(followers);
 			const followingProfiles = resolve(following);
-
-			setUserFollowers(followerProfiles);
-			setUserFollowing(followingProfiles);
-
 			const isGhost = new Set<number>(followers.map((follower) => follower.id));
-			setGhosts(() =>
-				followingProfiles.filter((following) => !isGhost.has(following.id))
-			);
-			setLoading(false);
+
+			dispatch({
+				type: "FINISHED",
+				audiences: {
+					ghosts: followingProfiles.filter(
+						(following) => !isGhost.has(following.id)
+					),
+					followers: resolve(followers),
+					following: followingProfiles
+				}
+			});
 		}
 		fetchAudience();
-	}, [credentials]);
+		return () => {
+			controller.abort();
+		};
+	}, [credentials, controller]);
 
-	return { userFollowers, userFollowing, ghosts, user, loading, steps };
+	const { user, audiences } = state;
+	return {
+		user,
+		steps,
+		...audiences
+	};
 }
