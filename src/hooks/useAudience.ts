@@ -1,51 +1,67 @@
 import { useEffect, useReducer, useState } from "react";
-import type { Credentials, GithubProfile, GithubUser } from "../types/api.types";
+import type {
+	AudienceData,
+	Credentials,
+	GithubProfile,
+	GithubUser,
+	Step,
+	StepId
+} from "../types/api.types";
 import {
 	fetchAllPages,
 	fetchAudiencesProfiles,
 	fetchUserProfile
 } from "../api/github";
 
-type Audiences = {
-	followers: GithubProfile[];
-	following: GithubProfile[];
-	ghosts: GithubProfile[];
+const INITIAL_STEPS: Step[] = [
+	{
+		id: "fetch",
+		label: "Fetching followers & following",
+		status: "idle",
+		detail: ""
+	},
+	{ id: "profiles", label: "Loading profiles", status: "idle", detail: "" },
+	{ id: "done", label: "Building audience", status: "idle", detail: "" }
+];
+export type FetchStatus = "idle" | "loading" | "success" | "error";
+
+export type AudienceState = {
+	status: FetchStatus;
+	steps: Step[];
+	pct: number;
+	user: GithubProfile | null;
+	audience: AudienceData | null;
 };
 
-type State = {
-	user: GithubProfile | null;
-	audiences: Audiences | null;
+const initialState: AudienceState = {
+	status: "idle",
+	steps: INITIAL_STEPS,
+	pct: 0,
+	user: null,
+	audience: null
 };
 
 type Action =
-	| {
-			type: "USER_RESOLVE";
-			user: GithubProfile;
-	  }
-	| {
-			type: "FINISHED";
-			audiences: Audiences;
-	  };
+	| { type: "FETCH_START" }
+	| { type: "USER_RESOLVED"; user: GithubProfile }
+	| { type: "STEP_UPDATE"; id: StepId; patch: Partial<Omit<Step, "id">> }
+	| { type: "PROGRESS"; pct: number }
+	| { type: "FETCH_SUCCESS"; audience: AudienceData };
 
-const INITIAL_STATE: State = {
-	user: null,
-	audiences: null
-};
-
-function reducer(state: State, action: Action): State {
+function reducer(state: AudienceState, action: Action): AudienceState {
 	switch (action.type) {
-		case "USER_RESOLVE":
+		case "USER_RESOLVED":
 			return {
 				...state,
 				user: action.user
 			};
 
-		case "FINISHED":
+		case "FETCH_SUCCESS":
 			return {
 				...state,
-				audiences: {
-					...state.audiences,
-					...action.audiences
+				audience: {
+					...state.audience,
+					...action.audience
 				}
 			};
 
@@ -55,18 +71,18 @@ function reducer(state: State, action: Action): State {
 	return state;
 }
 
-export function useAudience(credentials: Credentials, controller: AbortController) {
+export function useAudience(credentials: Credentials) {
 	const [steps, setSteps] = useState<{ steps: number; done: boolean }>();
 	const handleSteps = (steps: number, done: boolean) => {
 		setSteps({ steps, done });
 	};
-	const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
+	const [state, dispatch] = useReducer(reducer, initialState);
 
 	useEffect(() => {
 		if (!credentials.user) return;
 		async function fetchAudience() {
 			const user = await fetchUserProfile(credentials);
-			dispatch({ type: "USER_RESOLVE", user });
+			dispatch({ type: "USER_RESOLVED", user });
 
 			const [followers, following] = await Promise.all([
 				fetchAllPages(credentials, "followers", (n) => console.log(n)),
@@ -93,8 +109,8 @@ export function useAudience(credentials: Credentials, controller: AbortControlle
 			const isGhost = new Set<number>(followers.map((follower) => follower.id));
 
 			dispatch({
-				type: "FINISHED",
-				audiences: {
+				type: "FETCH_SUCCESS",
+				audience: {
 					ghosts: followingProfiles.filter(
 						(following) => !isGhost.has(following.id)
 					),
@@ -104,15 +120,13 @@ export function useAudience(credentials: Credentials, controller: AbortControlle
 			});
 		}
 		fetchAudience();
-		return () => {
-			controller.abort();
-		};
-	}, [credentials, controller]);
+		return () => {};
+	}, [credentials]);
 
-	const { user, audiences } = state;
+	const { user, audience } = state;
 	return {
 		user,
 		steps,
-		...audiences
+		...audience
 	};
 }

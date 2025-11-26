@@ -11,12 +11,7 @@ function App() {
 		token: ""
 	});
 
-	const controller = new AbortController();
-
-	const { following, followers, ghosts, user } = useAudience(
-		credentials,
-		controller
-	);
+	const { following, followers, ghosts, user } = useAudience(credentials);
 	const handleCredentials = (credentials: Credentials) => {
 		setCredential({ ...credentials });
 	};

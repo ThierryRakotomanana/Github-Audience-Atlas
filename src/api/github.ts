@@ -136,7 +136,7 @@ export const fetchAudiencesProfiles = async (
 		return async () => await fetchUserProfile({ user: login, token });
 	});
 
-	const profiles = await fetchBySteps(logins, tasks, 100, updateSteps);
+	const profiles = await fetchBySteps(logins, tasks, 30, updateSteps);
 	const audienceProfiles = new Map<string, GithubProfile>();
 	profiles.map((profile) => audienceProfiles.set(profile.login, profile));
 	return audienceProfiles;

@@ -41,6 +41,22 @@ export type GithubUser = z.infer<typeof GithubUserSchema>;
 export type GithubProfile = z.infer<typeof GithubProfileSchema>;
 export type GithubLocation = z.infer<typeof LocationSchema>;
 
-export type AudienceType = "followers" | "following";
+export type AudienceType = "followers" | "following" | "ghosts";
 
 export type Credentials = { user: string; token: string };
+
+export type AudienceData = {
+	followers: GithubProfile[];
+	following: GithubProfile[];
+	ghosts: GithubProfile[];
+};
+
+export type StepId = "fetch" | "profiles" | "done";
+export type StepStatus = "idle" | "active" | "done";
+
+export type Step = {
+	id: StepId;
+	label: string;
+	status: StepStatus;
+	detail: string;
+};
