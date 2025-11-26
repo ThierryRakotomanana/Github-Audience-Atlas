@@ -46,10 +46,13 @@ type Action =
 	| { type: "USER_RESOLVED"; user: GithubProfile }
 	| { type: "STEP_UPDATE"; id: StepId; patch: Partial<Omit<Step, "id">> }
 	| { type: "PROGRESS"; pct: number }
-	| { type: "FETCH_SUCCESS"; audience: AudienceData };
+	| { type: "FETCH_SUCCESS"; audience: AudienceData }
+	| { type: "RESET" };
 
 function reducer(state: AudienceState, action: Action): AudienceState {
 	switch (action.type) {
+		case "FETCH_START":
+			return { ...initialState, status: "loading" };
 		case "USER_RESOLVED":
 			return {
 				...state,
@@ -64,6 +67,8 @@ function reducer(state: AudienceState, action: Action): AudienceState {
 					...action.audience
 				}
 			};
+		case "RESET":
+			return initialState;
 
 		default:
 			break;
@@ -79,7 +84,12 @@ export function useAudience(credentials: Credentials) {
 	const [state, dispatch] = useReducer(reducer, initialState);
 
 	useEffect(() => {
-		if (!credentials.user) return;
+		const { user, token } = credentials;
+		if (!user && !token) {
+			dispatch({ type: "RESET" });
+		}
+
+		dispatch({ type: "FETCH_START" });
 		async function fetchAudience() {
 			const user = await fetchUserProfile(credentials);
 			dispatch({ type: "USER_RESOLVED", user });
