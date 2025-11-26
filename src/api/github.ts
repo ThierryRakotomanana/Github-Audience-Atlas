@@ -20,6 +20,9 @@ export class GithubApiError extends Error {
 	}
 }
 
+export const delay = (ms: number) =>
+	new Promise((resolve) => setTimeout(resolve, ms));
+
 export const fetchUserProfile = async ({
 	user,
 	token
@@ -98,7 +101,7 @@ export const fetchAllPages = async (
 		});
 		allAudiences.push(...audienceByPage);
 		onProgress?.(allAudiences.length);
-		await new Promise((param) => setTimeout(param, 120));
+		await delay(100);
 		if (audienceByPage.length < 100) break;
 		page++;
 	}
@@ -109,15 +112,15 @@ export const fetchBySteps = async (
 	audiences: string[],
 	tasks: (() => Promise<GithubProfile>)[],
 	concurrency: number,
-	onProgress: (done: number, total: number) => void
+	onProgress: ({ done, total }: { done: number; total: number }) => void
 ): Promise<GithubProfile[]> => {
 	let index: number = 0;
-	const results: GithubProfile[] = [];
+	const results: GithubProfile[] = new Array(tasks.length);
 	const worker = async () => {
 		while (index < audiences.length) {
-			results.push(await tasks[index]());
-			index++;
-			onProgress(results.length, audiences.length);
+			const current = index++;
+			results[current] = await tasks[current]();
+			onProgress({ done: index, total: audiences.length });
 		}
 		return results;
 	};
@@ -136,7 +139,7 @@ export const fetchAudiencesProfiles = async (
 		return async () => await fetchUserProfile({ user: login, token });
 	});
 
-	const profiles = await fetchBySteps(logins, tasks, 30, (done, total) => {
+	const profiles = await fetchBySteps(logins, tasks, 20, ({ done, total }) => {
 		onProgress?.({ done, total });
 	});
 	const audienceProfiles = new Map<string, GithubProfile>();

@@ -1,0 +1,129 @@
+.title {
+	font-size: 15px;
+	font-weight: 500;
+	color: var(--text-h);
+	letter-spacing: -0.2px;
+	margin: 0;
+}
+
+/* ── Progress bar ────────────────────────────────────────── */
+.barWrapper {
+	width: 100%;
+	max-width: 360px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+}
+
+.barTrack {
+	width: 100%;
+	height: 4px;
+	background: var(--border);
+	border-radius: var(--radius-full);
+	overflow: hidden;
+}
+
+.barFill {
+	height: 100%;
+	background: var(--accent);
+	border-radius: var(--radius-full);
+	transition: width 300ms cubic-bezier(0.16, 1, 0.3, 1);
+	/* prevent layout thrash — transform is GPU-composited */
+	will-change: width;
+}
+
+.barPct {
+	font-family: var(--mono);
+	font-size: 12px;
+	color: var(--text-muted);
+	text-align: right;
+	letter-spacing: 0.03em;
+}
+
+/* ── Steps list ──────────────────────────────────────────── */
+.steps {
+	width: 100%;
+	max-width: 360px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+}
+
+.step {
+	display: flex;
+	align-items: baseline;
+	gap: var(--space-3);
+	padding: var(--space-2) 0;
+}
+
+/* ── Step icon ───────────────────────────────────────────── */
+.stepIcon {
+	flex-shrink: 0;
+	width: 16px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* idle — empty circle */
+.iconIdle {
+	width: 8px;
+	height: 8px;
+	border-radius: var(--radius-full);
+	border: 1.5px solid var(--border);
+	margin: 0 auto;
+}
+
+/* active — spinning accent ring */
+.iconActive {
+	width: 14px;
+	height: 14px;
+	border-radius: var(--radius-full);
+	border: 2px solid var(--border);
+	border-top-color: var(--accent);
+	animation: spin 0.65s linear infinite;
+}
+
+/* done — filled accent circle with checkmark */
+.iconDone {
+	width: 16px;
+	height: 16px;
+	color: var(--accent);
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* ── Step text ───────────────────────────────────────────── */
+.stepBody {
+	flex: 1;
+	min-width: 0;
+}
+
+.stepLabel {
+	font-size: 13px;
+	font-weight: 500;
+	transition: color 150ms ease;
+}
+
+.stepLabel.idle {
+	color: var(--text-muted);
+}
+.stepLabel.active {
+	color: var(--text-h);
+}
+.stepLabel.done {
+	color: var(--text);
+}
+
+.stepDetail {
+	font-family: var(--mono);
+	font-size: 12px;
+	color: var(--text-muted);
+	margin-top: 1px;
+	min-height: 16px; /* prevent layout shift when detail appears */
+	transition: opacity 150ms ease;
+}

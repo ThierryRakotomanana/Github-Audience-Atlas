@@ -1,0 +1,131 @@
+.root {
+	min-height: 100svh;
+	background: var(--bg);
+}
+
+.banner {
+	display: flex;
+	align-items: center;
+	gap: var(--space-4);
+	padding: 14px var(--space-6);
+	background: var(--bg-card);
+	border-bottom: 1px solid var(--border);
+	max-width: 1126px;
+	margin: 0 auto;
+	width: 100%;
+}
+
+.bannerAvatar {
+	width: 38px;
+	height: 38px;
+	border-radius: var(--radius-full);
+	border: 1px solid var(--border);
+	flex-shrink: 0;
+	display: block;
+}
+
+.bannerInfo {
+	flex: 1;
+	min-width: 0;
+}
+
+.bannerName {
+	font-size: 15px;
+	font-weight: 500;
+	color: var(--text-h);
+	letter-spacing: -0.2px;
+}
+
+.bannerHandle {
+	font-family: var(--mono);
+	font-size: 13px;
+	color: var(--text);
+	margin-top: 1px;
+}
+
+/* ── Stats ───────────────────────────────────────────────── */
+.stats {
+	display: flex;
+	align-items: center;
+	gap: var(--space-6);
+	flex-shrink: 0;
+}
+
+.stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1px;
+}
+
+.statValue {
+	font-family: var(--mono);
+	font-size: 15px;
+	font-weight: 500;
+	color: var(--text-h);
+	letter-spacing: -0.3px;
+}
+
+.statLabel {
+	font-size: 11px;
+	color: var(--text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	font-weight: 500;
+}
+
+/* ── Error state ─────────────────────────────────────────── */
+.errorWrapper {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-4);
+	padding: var(--space-16) var(--space-8);
+	min-height: 60vh;
+	text-align: center;
+}
+
+.errorIcon {
+	color: var(--color-danger, #dc2626);
+	opacity: 0.7;
+}
+
+.errorIcon svg {
+	width: 28px;
+	height: 28px;
+}
+
+.errorMessage {
+	font-size: 15px;
+	color: var(--color-danger, #dc2626);
+	max-width: 380px;
+	line-height: 1.55;
+}
+
+.resetHint {
+	font-size: 13px;
+	color: var(--text);
+}
+
+.retryButton {
+	padding: 8px 20px;
+	background: transparent;
+	border: 1px solid var(--border-input);
+	border-radius: var(--radius-md);
+	font-family: var(--sans);
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--text-h);
+	cursor: pointer;
+	transition:
+		border-color var(--transition-fast),
+		background var(--transition-fast),
+		color var(--transition-fast);
+}
+
+.retryButton:hover {
+	border-color: var(--accent-border);
+	background: var(--accent-bg);
+	color: var(--accent);
+}

@@ -8,6 +8,7 @@ import type {
 	StepId
 } from "../types/api.types";
 import {
+	delay,
 	fetchAllPages,
 	fetchAudiencesProfiles,
 	fetchUserProfile
@@ -46,7 +47,7 @@ type Action =
 	| { type: "USER_RESOLVED"; user: GithubProfile }
 	| { type: "STEP_UPDATE"; id: StepId; patch: Partial<Omit<Step, "id">> }
 	| { type: "PROGRESS"; pct: number }
-	| { type: "FETCH_SUCCESS"; audience: AudienceData }
+	| { type: "FETCH_SUCCESS"; audience: AudienceData; status: FetchStatus }
 	| { type: "RESET" };
 
 function reducer(state: AudienceState, action: Action): AudienceState {
@@ -65,13 +66,19 @@ function reducer(state: AudienceState, action: Action): AudienceState {
 					step.id === action.id ? { ...step, ...action.patch } : step
 				)
 			};
+		case "PROGRESS":
+			return {
+				...state,
+				pct: action.pct
+			};
 		case "FETCH_SUCCESS":
 			return {
 				...state,
 				audience: {
 					...state.audience,
 					...action.audience
-				}
+				},
+				status: action.status
 			};
 		case "RESET":
 			return initialState;
@@ -82,7 +89,7 @@ function reducer(state: AudienceState, action: Action): AudienceState {
 	return state;
 }
 
-export function useAudience(credentials: Credentials) {
+export function useAudience(credentials: Credentials): AudienceState {
 	const [state, dispatch] = useReducer(reducer, initialState);
 
 	const updateStep = useCallback(
@@ -103,11 +110,17 @@ export function useAudience(credentials: Credentials) {
 			const user = await fetchUserProfile(credentials);
 			dispatch({ type: "USER_RESOLVED", user });
 
+			updateStep("fetch", { status: "active", detail: "0 followers 0 following" });
+
 			const [rawFollowers, rawFollowing] = await Promise.all([
 				fetchAllPages(credentials, "followers", (n) =>
 					updateStep("fetch", { detail: `${n} followers…` })
 				),
-				fetchAllPages(credentials, "following")
+				fetchAllPages(credentials, "following", (n) =>
+					updateStep("fetch", {
+						detail: `${n} following…`
+					})
+				)
 			]);
 
 			updateStep("fetch", {
@@ -136,6 +149,9 @@ export function useAudience(credentials: Credentials) {
 				}
 			);
 
+			updateStep("profiles", { status: "done" });
+
+			updateStep("done", { status: "active", detail: "computing…" });
 			const resolve = (rawAudiences: GithubUser[]): GithubProfile[] => {
 				return rawAudiences.flatMap((rawAudience) => {
 					const profile = audienceProfiles.get(rawAudience.login);
@@ -146,6 +162,11 @@ export function useAudience(credentials: Credentials) {
 			const followingProfiles = resolve(rawFollowing);
 			const isGhost = new Set<number>(rawFollowers.map((follower) => follower.id));
 
+			updateStep("done", { status: "done", detail: "All data loaded" });
+			dispatch({ type: "PROGRESS", pct: 100 });
+
+			await delay(1100);
+
 			dispatch({
 				type: "FETCH_SUCCESS",
 				audience: {
@@ -154,16 +175,13 @@ export function useAudience(credentials: Credentials) {
 					),
 					followers: resolve(rawFollowers),
 					following: followingProfiles
-				}
+				},
+				status: "success"
 			});
 		}
 		fetchAudience();
 		return () => {};
 	}, [credentials, updateStep]);
 
-	const { user, audience } = state;
-	return {
-		user,
-		...audience
-	};
+	return state;
 }
