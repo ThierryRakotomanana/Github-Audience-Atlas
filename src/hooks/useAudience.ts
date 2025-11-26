@@ -104,19 +104,20 @@ export function useAudience(credentials: Credentials): AudienceState {
 			dispatch({ type: "RESET" });
 			return;
 		}
-
+		const controller = new AbortController();
+		const { signal, abort } = controller;
 		dispatch({ type: "FETCH_START" });
 		async function fetchAudience() {
-			const user = await fetchUserProfile(credentials);
+			const user = await fetchUserProfile({ ...credentials, signal });
 			dispatch({ type: "USER_RESOLVED", user });
 
 			updateStep("fetch", { status: "active", detail: "0 followers 0 following" });
 
 			const [rawFollowers, rawFollowing] = await Promise.all([
-				fetchAllPages(credentials, "followers", (n) =>
+				fetchAllPages(credentials, "followers", signal, (n) =>
 					updateStep("fetch", { detail: `${n} followers…` })
 				),
-				fetchAllPages(credentials, "following", (n) =>
+				fetchAllPages(credentials, "following", signal, (n) =>
 					updateStep("fetch", {
 						detail: `${n} following…`
 					})
@@ -143,6 +144,7 @@ export function useAudience(credentials: Credentials): AudienceState {
 			const audienceProfiles = await fetchAudiencesProfiles(
 				uniqueLogins,
 				credentials.token,
+				signal,
 				({ done, total }) => {
 					updateStep("profiles", { detail: `${done} / ${total}` });
 					dispatch({ type: "PROGRESS", pct: 20 + Math.round((done / total) * 75) });
@@ -180,7 +182,9 @@ export function useAudience(credentials: Credentials): AudienceState {
 			});
 		}
 		fetchAudience();
-		return () => {};
+		return () => {
+			abort();
+		};
 	}, [credentials, updateStep]);
 
 	return state;

@@ -25,16 +25,18 @@ export const delay = (ms: number) =>
 
 export const fetchUserProfile = async ({
 	user,
+	signal,
 	token
-}: Credentials): Promise<GithubProfile> => {
+}: Credentials & { signal: AbortSignal }): Promise<GithubProfile> => {
 	const endPoint = `users/${user}`;
-	const response = await githubFetch(endPoint, token);
+	const response = await githubFetch(endPoint, signal, token);
 	const data = await response.json();
 	return parseOrThrow(GithubProfileSchema, data, `Profile : ${user}`);
 };
 
 export const githubFetch = async (
 	endPoint: string,
+	signal: AbortSignal,
 	token?: string,
 	params?: Record<string, number | string>
 ): Promise<Response> => {
@@ -48,7 +50,7 @@ export const githubFetch = async (
 		...(token ? { Authorization: `Bearer ${token}` } : {})
 	};
 
-	const response = await fetch(url, { headers });
+	const response = await fetch(url, { headers, signal: signal });
 
 	if (response.status === 403)
 		throw new GithubApiError(
@@ -78,11 +80,12 @@ function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown, ctx: string): T {
 export const fetchGithubUserData = async (
 	credentials: Credentials,
 	audienceType: AudienceType,
+	signal: AbortSignal,
 	params?: Record<string, number>
 ): Promise<GithubUser[]> => {
 	const { user, token } = credentials;
 	const endPoint = `users/${user}/${audienceType}`;
-	const response = await githubFetch(endPoint, token, params);
+	const response = await githubFetch(endPoint, signal, token, params);
 	const rawData = await response.json();
 	return parseOrThrow(z.array(GithubUserSchema), rawData, audienceType);
 };
@@ -90,15 +93,21 @@ export const fetchGithubUserData = async (
 export const fetchAllPages = async (
 	credentials: Credentials,
 	audienceType: AudienceType,
+	signal: AbortSignal,
 	onProgress?: (step: number) => void
 ): Promise<GithubUser[]> => {
 	let page = 1;
 	const allAudiences: GithubUser[] = [];
 	while (true) {
-		const audienceByPage = await fetchGithubUserData(credentials, audienceType, {
-			per_page: 100,
-			page
-		});
+		const audienceByPage = await fetchGithubUserData(
+			credentials,
+			audienceType,
+			signal,
+			{
+				per_page: 100,
+				page
+			}
+		);
 		allAudiences.push(...audienceByPage);
 		onProgress?.(allAudiences.length);
 		await delay(100);
@@ -133,10 +142,11 @@ export const fetchBySteps = async (
 export const fetchAudiencesProfiles = async (
 	logins: string[],
 	token: string,
+	signal: AbortSignal,
 	onProgress: (progress: ProfileProgress) => void
 ): Promise<Map<string, GithubProfile>> => {
 	const tasks = logins.map((login) => {
-		return async () => await fetchUserProfile({ user: login, token });
+		return async () => await fetchUserProfile({ user: login, token, signal });
 	});
 
 	const profiles = await fetchBySteps(logins, tasks, 20, ({ done, total }) => {
