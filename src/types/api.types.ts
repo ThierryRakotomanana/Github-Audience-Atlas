@@ -65,3 +65,9 @@ export type ProfileProgress = {
 	done: number;
 	total: number;
 };
+
+export type RateLimit = {
+	limit: number;
+	remaining: number;
+	resetAt: Date;
+};

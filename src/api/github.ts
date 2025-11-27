@@ -6,7 +6,8 @@ import {
 	type GithubProfile,
 	GithubProfileSchema,
 	type Credentials,
-	type ProfileProgress
+	type ProfileProgress,
+	type RateLimit
 } from "../types/api.types";
 import { GITHUB_CONFIG } from "../config";
 
@@ -20,6 +21,27 @@ export class GithubApiError extends Error {
 	}
 }
 
+export class RateLimitError extends Error {
+	constructor(public resetAt: Date) {
+		super(`Rate limit exceeded. Resets at ${resetAt.toLocaleTimeString()}.`);
+		this.name = "RateLimitError";
+	}
+}
+
+export function parseRateLimit(headers: Headers): RateLimit {
+	return {
+		limit: parseInt(headers.get("X-RateLimit-Limit") ?? "60"),
+		remaining: parseInt(headers.get("X-RateLimit-Remaining") ?? "0"),
+		resetAt: new Date(parseInt(headers.get("X-RateLimit-Reset") ?? "0") * 1000)
+	};
+}
+
+const QUOTA_BUFFER = 50;
+
+export function isQuotaLow(rateLimit: RateLimit): boolean {
+	return rateLimit.remaining <= QUOTA_BUFFER;
+}
+
 export const delay = (ms: number) =>
 	new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -29,8 +51,7 @@ export const fetchUserProfile = async ({
 	token
 }: Credentials & { signal: AbortSignal }): Promise<GithubProfile> => {
 	const endPoint = `users/${user}`;
-	const response = await githubFetch(endPoint, signal, token);
-	const data = await response.json();
+	const { data } = await githubFetch(endPoint, signal, token);
 	return parseOrThrow(GithubProfileSchema, data, `Profile : ${user}`);
 };
 
@@ -39,7 +60,7 @@ export const githubFetch = async (
 	signal: AbortSignal,
 	token?: string,
 	params?: Record<string, number | string>
-): Promise<Response> => {
+): Promise<{ data: unknown; rateLimit: RateLimit }> => {
 	const url = new URL(`${GITHUB_CONFIG.apiBase}/${endPoint}`);
 	if (params)
 		Object.entries(params).forEach(([k, v]) =>
@@ -52,6 +73,11 @@ export const githubFetch = async (
 
 	const response = await fetch(url, { headers, signal: signal });
 
+	const rateLimit = parseRateLimit(response.headers);
+
+	if (response.status === 403 || response.status === 429) {
+		throw new RateLimitError(rateLimit.resetAt);
+	}
 	if (response.status === 403)
 		throw new GithubApiError(
 			"GitHub API rate limit exceeded. Add a token to raise it to 5000 req/hr.",
@@ -64,7 +90,8 @@ export const githubFetch = async (
 			response.status
 		);
 
-	return response;
+	const data = await response.json();
+	return { data, rateLimit };
 };
 
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown, ctx: string): T {
@@ -82,12 +109,14 @@ export const fetchGithubUserData = async (
 	audienceType: AudienceType,
 	signal: AbortSignal,
 	params?: Record<string, number>
-): Promise<GithubUser[]> => {
+): Promise<{ data: GithubUser[]; rateLimit: RateLimit }> => {
 	const { user, token } = credentials;
 	const endPoint = `users/${user}/${audienceType}`;
-	const response = await githubFetch(endPoint, signal, token, params);
-	const rawData = await response.json();
-	return parseOrThrow(z.array(GithubUserSchema), rawData, audienceType);
+	const { data, rateLimit } = await githubFetch(endPoint, signal, token, params);
+	return {
+		data: parseOrThrow(z.array(GithubUserSchema), data, audienceType),
+		rateLimit
+	};
 };
 
 export const fetchAllPages = async (
@@ -99,7 +128,7 @@ export const fetchAllPages = async (
 	let page = 1;
 	const allAudiences: GithubUser[] = [];
 	while (true) {
-		const audienceByPage = await fetchGithubUserData(
+		const { data: audienceByPage, rateLimit } = await fetchGithubUserData(
 			credentials,
 			audienceType,
 			signal,
@@ -108,6 +137,10 @@ export const fetchAllPages = async (
 				page
 			}
 		);
+
+		if (isQuotaLow(rateLimit)) {
+			throw new RateLimitError(rateLimit.resetAt);
+		}
 		allAudiences.push(...audienceByPage);
 		onProgress?.(allAudiences.length);
 		await delay(100);
