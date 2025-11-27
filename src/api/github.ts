@@ -51,7 +51,10 @@ export const fetchUserProfile = async ({
 	token
 }: Credentials & { signal: AbortSignal }): Promise<GithubProfile> => {
 	const endPoint = `users/${user}`;
-	const { data } = await githubFetch(endPoint, signal, token);
+	const { data, rateLimit } = await githubFetch(endPoint, signal, token);
+	if (isQuotaLow(rateLimit)) {
+		throw new RateLimitError(rateLimit.resetAt);
+	}
 	return parseOrThrow(GithubProfileSchema, data, `Profile : ${user}`);
 };
 
