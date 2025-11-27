@@ -60,3 +60,8 @@ export type Step = {
 	status: StepStatus;
 	detail: string;
 };
+
+export type ProfileProgress = {
+	done: number;
+	total: number;
+};

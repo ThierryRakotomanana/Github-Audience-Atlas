@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import type {
 	AudienceData,
 	Credentials,
@@ -58,7 +58,13 @@ function reducer(state: AudienceState, action: Action): AudienceState {
 				...state,
 				user: action.user
 			};
-
+		case "STEP_UPDATE":
+			return {
+				...state,
+				steps: state.steps.map((step) =>
+					step.id === action.id ? { ...step, ...action.patch } : step
+				)
+			};
 		case "FETCH_SUCCESS":
 			return {
 				...state,
@@ -77,16 +83,19 @@ function reducer(state: AudienceState, action: Action): AudienceState {
 }
 
 export function useAudience(credentials: Credentials) {
-	const [steps, setSteps] = useState<{ steps: number; done: boolean }>();
-	const handleSteps = (steps: number, done: boolean) => {
-		setSteps({ steps, done });
-	};
 	const [state, dispatch] = useReducer(reducer, initialState);
+
+	const updateStep = useCallback(
+		(id: StepId, patch: Partial<Omit<Step, "id">>) =>
+			dispatch({ type: "STEP_UPDATE", id, patch }),
+		[]
+	);
 
 	useEffect(() => {
 		const { user, token } = credentials;
 		if (!user && !token) {
 			dispatch({ type: "RESET" });
+			return;
 		}
 
 		dispatch({ type: "FETCH_START" });
@@ -94,18 +103,37 @@ export function useAudience(credentials: Credentials) {
 			const user = await fetchUserProfile(credentials);
 			dispatch({ type: "USER_RESOLVED", user });
 
-			const [followers, following] = await Promise.all([
-				fetchAllPages(credentials, "followers", (n) => console.log(n)),
+			const [rawFollowers, rawFollowing] = await Promise.all([
+				fetchAllPages(credentials, "followers", (n) =>
+					updateStep("fetch", { detail: `${n} followers…` })
+				),
 				fetchAllPages(credentials, "following")
 			]);
 
-			const uniqueAudiences = [
-				...new Set([...followers, ...following].map((audience) => audience.login))
+			updateStep("fetch", {
+				status: "done",
+				detail: `${rawFollowers.length} followers · ${rawFollowing.length} following`
+			});
+			dispatch({ type: "PROGRESS", pct: 20 });
+
+			const uniqueLogins = [
+				...new Set(
+					[...rawFollowers, ...rawFollowing].map((audience) => audience.login)
+				)
 			];
+
+			updateStep("profiles", {
+				status: "active",
+				detail: `0 / ${uniqueLogins.length}`
+			});
+
 			const audienceProfiles = await fetchAudiencesProfiles(
-				uniqueAudiences,
+				uniqueLogins,
 				credentials.token,
-				handleSteps
+				({ done, total }) => {
+					updateStep("profiles", { detail: `${done} / ${total}` });
+					dispatch({ type: "PROGRESS", pct: 20 + Math.round((done / total) * 75) });
+				}
 			);
 
 			const resolve = (rawAudiences: GithubUser[]): GithubProfile[] => {
@@ -115,8 +143,8 @@ export function useAudience(credentials: Credentials) {
 				});
 			};
 
-			const followingProfiles = resolve(following);
-			const isGhost = new Set<number>(followers.map((follower) => follower.id));
+			const followingProfiles = resolve(rawFollowing);
+			const isGhost = new Set<number>(rawFollowers.map((follower) => follower.id));
 
 			dispatch({
 				type: "FETCH_SUCCESS",
@@ -124,19 +152,18 @@ export function useAudience(credentials: Credentials) {
 					ghosts: followingProfiles.filter(
 						(following) => !isGhost.has(following.id)
 					),
-					followers: resolve(followers),
+					followers: resolve(rawFollowers),
 					following: followingProfiles
 				}
 			});
 		}
 		fetchAudience();
 		return () => {};
-	}, [credentials]);
+	}, [credentials, updateStep]);
 
 	const { user, audience } = state;
 	return {
 		user,
-		steps,
 		...audience
 	};
 }

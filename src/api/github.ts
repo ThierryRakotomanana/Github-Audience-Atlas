@@ -5,7 +5,8 @@ import {
 	type AudienceType,
 	type GithubProfile,
 	GithubProfileSchema,
-	type Credentials
+	type Credentials,
+	type ProfileProgress
 } from "../types/api.types";
 import { GITHUB_CONFIG } from "../config";
 
@@ -108,7 +109,7 @@ export const fetchBySteps = async (
 	audiences: string[],
 	tasks: (() => Promise<GithubProfile>)[],
 	concurrency: number,
-	updateSteps: (steps: number, done: boolean) => void
+	onProgress: (done: number, total: number) => void
 ): Promise<GithubProfile[]> => {
 	let index: number = 0;
 	const results: GithubProfile[] = [];
@@ -116,27 +117,28 @@ export const fetchBySteps = async (
 		while (index < audiences.length) {
 			results.push(await tasks[index]());
 			index++;
-			updateSteps(index, false);
+			onProgress(results.length, audiences.length);
 		}
 		return results;
 	};
 	await Promise.all(
 		Array.from({ length: Math.min(audiences.length, concurrency) }, worker)
 	);
-	updateSteps(results.length, true);
 	return results;
 };
 
 export const fetchAudiencesProfiles = async (
 	logins: string[],
 	token: string,
-	updateSteps: (steps: number, done: boolean) => void
+	onProgress: (progress: ProfileProgress) => void
 ): Promise<Map<string, GithubProfile>> => {
 	const tasks = logins.map((login) => {
 		return async () => await fetchUserProfile({ user: login, token });
 	});
 
-	const profiles = await fetchBySteps(logins, tasks, 30, updateSteps);
+	const profiles = await fetchBySteps(logins, tasks, 30, (done, total) => {
+		onProgress?.({ done, total });
+	});
 	const audienceProfiles = new Map<string, GithubProfile>();
 	profiles.map((profile) => audienceProfiles.set(profile.login, profile));
 	return audienceProfiles;
