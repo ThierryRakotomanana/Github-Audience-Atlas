@@ -16,7 +16,7 @@ function App() {
 
 	const { status, steps, pct, user, audience } = useAudience(credentials);
 
-	const isAuthorized = Boolean(credentials.user && credentials.token);
+	const isAuthorized = Boolean(credentials.user);
 
 	if (!isAuthorized) {
 		return <CredentialForm handleCredentials={setCredentials} />;

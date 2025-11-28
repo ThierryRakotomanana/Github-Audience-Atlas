@@ -118,7 +118,6 @@ const CredentialForm = (props: {
 						placeholder='Enter secure token'
 						value={formData.token}
 						onChange={handleChange}
-						required
 					/>
 				</div>
 
