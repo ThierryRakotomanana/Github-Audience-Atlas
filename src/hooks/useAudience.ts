@@ -99,16 +99,16 @@ export function useAudience(credentials: Credentials): AudienceState {
 	);
 
 	useEffect(() => {
-		const { user, token } = credentials;
-		if (!user && !token) {
+		const { user } = credentials;
+		if (!user) {
 			dispatch({ type: "RESET" });
 			return;
 		}
 		const controller = new AbortController();
-		const { signal, abort } = controller;
+		const { signal } = controller;
 		dispatch({ type: "FETCH_START" });
 		async function fetchAudience() {
-			const user = await fetchUserProfile({ ...credentials, signal });
+			const { data: user } = await fetchUserProfile({ ...credentials, signal });
 			dispatch({ type: "USER_RESOLVED", user });
 
 			updateStep("fetch", { status: "active", detail: "0 followers 0 following" });
@@ -183,7 +183,7 @@ export function useAudience(credentials: Credentials): AudienceState {
 		}
 		fetchAudience();
 		return () => {
-			abort();
+			controller.abort();
 		};
 	}, [credentials, updateStep]);
 

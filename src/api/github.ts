@@ -7,7 +7,8 @@ import {
 	GithubProfileSchema,
 	type Credentials,
 	type ProfileProgress,
-	type RateLimit
+	type RateLimit,
+	type CostEstimate
 } from "../types/api.types";
 import { GITHUB_CONFIG } from "../config";
 
@@ -49,13 +50,19 @@ export const fetchUserProfile = async ({
 	user,
 	signal,
 	token
-}: Credentials & { signal: AbortSignal }): Promise<GithubProfile> => {
+}: Credentials & { signal: AbortSignal }): Promise<{
+	data: GithubProfile;
+	rateLimit: RateLimit;
+}> => {
 	const endPoint = `users/${user}`;
 	const { data, rateLimit } = await githubFetch(endPoint, signal, token);
 	if (isQuotaLow(rateLimit)) {
 		throw new RateLimitError(rateLimit.resetAt);
 	}
-	return parseOrThrow(GithubProfileSchema, data, `Profile : ${user}`);
+	return {
+		data: parseOrThrow(GithubProfileSchema, data, `Profile : ${user}`),
+		rateLimit
+	};
 };
 
 export const githubFetch = async (
@@ -155,7 +162,10 @@ export const fetchAllPages = async (
 
 export const fetchBySteps = async (
 	audiences: string[],
-	tasks: (() => Promise<GithubProfile>)[],
+	tasks: (() => Promise<{
+		data: GithubProfile;
+		rateLimit: RateLimit;
+	}>)[],
 	concurrency: number,
 	onProgress: ({ done, total }: { done: number; total: number }) => void
 ): Promise<GithubProfile[]> => {
@@ -164,7 +174,8 @@ export const fetchBySteps = async (
 	const worker = async () => {
 		while (index < audiences.length) {
 			const current = index++;
-			results[current] = await tasks[current]();
+			const { data } = await tasks[current]();
+			results[current] = data;
 			onProgress({ done: index, total: audiences.length });
 		}
 		return results;
@@ -192,3 +203,20 @@ export const fetchAudiencesProfiles = async (
 	profiles.map((profile) => audienceProfiles.set(profile.login, profile));
 	return audienceProfiles;
 };
+
+export function estimateCost(
+	followers: number,
+	following: number,
+	rateLimit: RateLimit
+): CostEstimate {
+	const followerPages = Math.ceil(followers / 100);
+	const followingPages = Math.ceil(following / 100);
+	const profileRequests = followers + following;
+	const requestsNeeded = followerPages + followingPages + profileRequests;
+
+	return {
+		requestsNeeded,
+		remaining: rateLimit.remaining,
+		willExceed: requestsNeeded > rateLimit.remaining - 50 // keep 50 in reserve
+	};
+}

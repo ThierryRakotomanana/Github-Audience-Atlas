@@ -71,3 +71,9 @@ export type RateLimit = {
 	remaining: number;
 	resetAt: Date;
 };
+
+export type CostEstimate = {
+	requestsNeeded: number;
+	remaining: number;
+	willExceed: boolean;
+};
