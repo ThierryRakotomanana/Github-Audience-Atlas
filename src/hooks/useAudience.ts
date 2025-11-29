@@ -108,78 +108,90 @@ export function useAudience(credentials: Credentials): AudienceState {
 		const { signal } = controller;
 		dispatch({ type: "FETCH_START" });
 		async function fetchAudience() {
-			const { data: user } = await fetchUserProfile({ ...credentials, signal });
-			dispatch({ type: "USER_RESOLVED", user });
+			try {
+				const { data: user } = await fetchUserProfile({ ...credentials, signal });
+				dispatch({ type: "USER_RESOLVED", user });
 
-			updateStep("fetch", { status: "active", detail: "0 followers 0 following" });
-
-			const [rawFollowers, rawFollowing] = await Promise.all([
-				fetchAllPages(credentials, "followers", signal, (n) =>
-					updateStep("fetch", { detail: `${n} followers…` })
-				),
-				fetchAllPages(credentials, "following", signal, (n) =>
-					updateStep("fetch", {
-						detail: `${n} following…`
-					})
-				)
-			]);
-
-			updateStep("fetch", {
-				status: "done",
-				detail: `${rawFollowers.length} followers · ${rawFollowing.length} following`
-			});
-			dispatch({ type: "PROGRESS", pct: 20 });
-
-			const uniqueLogins = [
-				...new Set(
-					[...rawFollowers, ...rawFollowing].map((audience) => audience.login)
-				)
-			];
-
-			updateStep("profiles", {
-				status: "active",
-				detail: `0 / ${uniqueLogins.length}`
-			});
-
-			const audienceProfiles = await fetchAudiencesProfiles(
-				uniqueLogins,
-				credentials.token,
-				signal,
-				({ done, total }) => {
-					updateStep("profiles", { detail: `${done} / ${total}` });
-					dispatch({ type: "PROGRESS", pct: 20 + Math.round((done / total) * 75) });
-				}
-			);
-
-			updateStep("profiles", { status: "done" });
-
-			updateStep("done", { status: "active", detail: "computing…" });
-			const resolve = (rawAudiences: GithubUser[]): GithubProfile[] => {
-				return rawAudiences.flatMap((rawAudience) => {
-					const profile = audienceProfiles.get(rawAudience.login);
-					return profile ? profile : [];
+				updateStep("fetch", {
+					status: "active",
+					detail: "0 followers 0 following"
 				});
-			};
 
-			const followingProfiles = resolve(rawFollowing);
-			const isGhost = new Set<number>(rawFollowers.map((follower) => follower.id));
-
-			updateStep("done", { status: "done", detail: "All data loaded" });
-			dispatch({ type: "PROGRESS", pct: 100 });
-
-			await delay(1100);
-
-			dispatch({
-				type: "FETCH_SUCCESS",
-				audience: {
-					ghosts: followingProfiles.filter(
-						(following) => !isGhost.has(following.id)
+				const [rawFollowers, rawFollowing] = await Promise.all([
+					fetchAllPages(credentials, "followers", signal, (n) =>
+						updateStep("fetch", { detail: `${n} followers…` })
 					),
-					followers: resolve(rawFollowers),
-					following: followingProfiles
-				},
-				status: "success"
-			});
+					fetchAllPages(credentials, "following", signal, (n) =>
+						updateStep("fetch", {
+							detail: `${n} following…`
+						})
+					)
+				]);
+
+				updateStep("fetch", {
+					status: "done",
+					detail: `${rawFollowers.length} followers · ${rawFollowing.length} following`
+				});
+				dispatch({ type: "PROGRESS", pct: 20 });
+
+				const uniqueLogins = [
+					...new Set(
+						[...rawFollowers, ...rawFollowing].map((audience) => audience.login)
+					)
+				];
+
+				updateStep("profiles", {
+					status: "active",
+					detail: `0 / ${uniqueLogins.length}`
+				});
+
+				const audienceProfiles = await fetchAudiencesProfiles(
+					uniqueLogins,
+					credentials.token,
+					signal,
+					({ done, total }) => {
+						updateStep("profiles", { detail: `${done} / ${total}` });
+						dispatch({
+							type: "PROGRESS",
+							pct: 20 + Math.round((done / total) * 75)
+						});
+					}
+				);
+
+				updateStep("profiles", { status: "done" });
+
+				updateStep("done", { status: "active", detail: "computing…" });
+				const resolve = (rawAudiences: GithubUser[]): GithubProfile[] => {
+					return rawAudiences.flatMap((rawAudience) => {
+						const profile = audienceProfiles.get(rawAudience.login);
+						return profile ? profile : [];
+					});
+				};
+
+				const followingProfiles = resolve(rawFollowing);
+				const isGhost = new Set<number>(
+					rawFollowers.map((follower) => follower.id)
+				);
+
+				updateStep("done", { status: "done", detail: "All data loaded" });
+				dispatch({ type: "PROGRESS", pct: 100 });
+
+				await delay(1100);
+
+				dispatch({
+					type: "FETCH_SUCCESS",
+					audience: {
+						ghosts: followingProfiles.filter(
+							(following) => !isGhost.has(following.id)
+						),
+						followers: resolve(rawFollowers),
+						following: followingProfiles
+					},
+					status: "success"
+				});
+			} catch (error) {
+				console.log(error);
+			}
 		}
 		fetchAudience();
 		return () => {
