@@ -11,7 +11,9 @@ import {
 	delay,
 	fetchAllPages,
 	fetchAudiencesProfiles,
-	fetchUserProfile
+	fetchUserProfile,
+	GithubApiError,
+	RateLimitError
 } from "../api/github";
 
 const INITIAL_STEPS: Step[] = [
@@ -32,6 +34,8 @@ export type AudienceState = {
 	pct: number;
 	user: GithubProfile | null;
 	audience: AudienceData | null;
+	error: string | null;
+	resetAt: Date | null;
 };
 
 const initialState: AudienceState = {
@@ -39,7 +43,9 @@ const initialState: AudienceState = {
 	steps: INITIAL_STEPS,
 	pct: 0,
 	user: null,
-	audience: null
+	audience: null,
+	error: null,
+	resetAt: null
 };
 
 type Action =
@@ -48,6 +54,7 @@ type Action =
 	| { type: "STEP_UPDATE"; id: StepId; patch: Partial<Omit<Step, "id">> }
 	| { type: "PROGRESS"; pct: number }
 	| { type: "FETCH_SUCCESS"; audience: AudienceData; status: FetchStatus }
+	| { type: "FETCH_ERROR"; message: string; resetAt?: Date }
 	| { type: "RESET" };
 
 function reducer(state: AudienceState, action: Action): AudienceState {
@@ -79,6 +86,13 @@ function reducer(state: AudienceState, action: Action): AudienceState {
 					...action.audience
 				},
 				status: action.status
+			};
+		case "FETCH_ERROR":
+			return {
+				...initialState,
+				error: action.message,
+				resetAt: action.resetAt ?? null,
+				status: "error"
 			};
 		case "RESET":
 			return initialState;
@@ -190,7 +204,23 @@ export function useAudience(credentials: Credentials): AudienceState {
 					status: "success"
 				});
 			} catch (error) {
-				console.log(error);
+				if (error instanceof Error && error.name === "AbortError") return;
+				if (error instanceof RateLimitError) {
+					dispatch({
+						type: "FETCH_ERROR",
+						message: error.message,
+						resetAt: error.resetAt
+					});
+					return;
+				}
+				dispatch({
+					type: "FETCH_ERROR",
+					message:
+						error instanceof GithubApiError ?
+							error.message
+						:	`An unexpected error occurred. Please try again`
+				});
+				return;
 			}
 		}
 		fetchAudience();

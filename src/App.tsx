@@ -14,7 +14,7 @@ function App() {
 		token: ""
 	});
 
-	const { status, steps, pct, user, audience } = useAudience(credentials);
+	const { status, steps, error, pct, user, audience } = useAudience(credentials);
 
 	const isAuthorized = Boolean(credentials.user);
 
@@ -55,7 +55,7 @@ function App() {
 			)}
 
 			{status === "loading" && <LoadingView steps={steps} pct={pct} />}
-
+			{status === "error" && <div> {`${error}`}</div>}
 			{status === "success" && audience && (
 				<GithubExplorer
 					followers={audience.followers}
