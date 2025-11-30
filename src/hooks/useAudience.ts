@@ -119,7 +119,12 @@ function reducer(state: AudienceState, action: Action): AudienceState {
 	return state;
 }
 
-export function useAudience(credentials: Credentials): AudienceState {
+export type UseAudienceReturn = AudienceState & {
+	proceed: () => void;
+	abort: () => void;
+};
+
+export function useAudience(credentials: Credentials): UseAudienceReturn {
 	const [state, dispatch] = useReducer(reducer, initialState);
 
 	const updateStep = useCallback(
@@ -127,6 +132,8 @@ export function useAudience(credentials: Credentials): AudienceState {
 			dispatch({ type: "STEP_UPDATE", id, patch }),
 		[]
 	);
+
+	const abort = useCallback(() => dispatch({ type: "RESET" }), []);
 
 	const runFetch = useCallback(
 		async function (
@@ -248,6 +255,12 @@ export function useAudience(credentials: Credentials): AudienceState {
 		[updateStep]
 	);
 
+	const proceed = useCallback(() => {
+		const controller = new AbortController();
+		dispatch({ type: "FETCH_START" });
+		runFetch(credentials, controller.signal, true);
+	}, [credentials, runFetch]);
+
 	useEffect(() => {
 		const { user } = credentials;
 		if (!user) {
@@ -263,5 +276,5 @@ export function useAudience(credentials: Credentials): AudienceState {
 		};
 	}, [credentials, runFetch]);
 
-	return state;
+	return { ...state, abort, proceed };
 }
