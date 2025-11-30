@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useReducer } from "react";
 import type {
 	AudienceData,
+	CostEstimate,
 	Credentials,
 	GithubProfile,
 	GithubUser,
@@ -9,6 +10,7 @@ import type {
 } from "../types/api.types";
 import {
 	delay,
+	estimateCost,
 	fetchAllPages,
 	fetchAudiencesProfiles,
 	fetchUserProfile,
@@ -26,7 +28,12 @@ const INITIAL_STEPS: Step[] = [
 	{ id: "profiles", label: "Loading profiles", status: "idle", detail: "" },
 	{ id: "done", label: "Building audience", status: "idle", detail: "" }
 ];
-export type FetchStatus = "idle" | "loading" | "success" | "error";
+export type FetchStatus =
+	| "idle"
+	| "loading"
+	| "success"
+	| "error"
+	| "quota_warning";
 
 export type AudienceState = {
 	status: FetchStatus;
@@ -36,6 +43,7 @@ export type AudienceState = {
 	audience: AudienceData | null;
 	error: string | null;
 	resetAt: Date | null;
+	estimate: CostEstimate | null;
 };
 
 const initialState: AudienceState = {
@@ -45,7 +53,8 @@ const initialState: AudienceState = {
 	user: null,
 	audience: null,
 	error: null,
-	resetAt: null
+	resetAt: null,
+	estimate: null
 };
 
 type Action =
@@ -55,7 +64,8 @@ type Action =
 	| { type: "PROGRESS"; pct: number }
 	| { type: "FETCH_SUCCESS"; audience: AudienceData; status: FetchStatus }
 	| { type: "FETCH_ERROR"; message: string; resetAt?: Date }
-	| { type: "RESET" };
+	| { type: "RESET" }
+	| { type: "QUOTA_WARNING"; estimate: CostEstimate };
 
 function reducer(state: AudienceState, action: Action): AudienceState {
 	switch (action.type) {
@@ -94,6 +104,12 @@ function reducer(state: AudienceState, action: Action): AudienceState {
 				resetAt: action.resetAt ?? null,
 				status: "error"
 			};
+		case "QUOTA_WARNING":
+			return {
+				...state,
+				estimate: action.estimate,
+				status: "quota_warning"
+			};
 		case "RESET":
 			return initialState;
 
@@ -112,19 +128,25 @@ export function useAudience(credentials: Credentials): AudienceState {
 		[]
 	);
 
-	useEffect(() => {
-		const { user } = credentials;
-		if (!user) {
-			dispatch({ type: "RESET" });
-			return;
-		}
-		const controller = new AbortController();
-		const { signal } = controller;
-		dispatch({ type: "FETCH_START" });
-		async function fetchAudience() {
+	const runFetch = useCallback(
+		async function (
+			credentials: Credentials,
+			signal: AbortSignal,
+			skipWarning = false
+		) {
+			dispatch({ type: "FETCH_START" });
 			try {
-				const { data: user } = await fetchUserProfile({ ...credentials, signal });
+				const { data: user, rateLimit } = await fetchUserProfile({
+					...credentials,
+					signal
+				});
 				dispatch({ type: "USER_RESOLVED", user });
+
+				const estimate = estimateCost(user.followers, user.following, rateLimit);
+				if (estimate.willExceed && !skipWarning) {
+					dispatch({ type: "QUOTA_WARNING", estimate });
+					return;
+				}
 
 				updateStep("fetch", {
 					status: "active",
@@ -222,12 +244,24 @@ export function useAudience(credentials: Credentials): AudienceState {
 				});
 				return;
 			}
+		},
+		[updateStep]
+	);
+
+	useEffect(() => {
+		const { user } = credentials;
+		if (!user) {
+			dispatch({ type: "RESET" });
+			return;
 		}
-		fetchAudience();
+		const controller = new AbortController();
+		const { signal } = controller;
+
+		runFetch(credentials, signal);
 		return () => {
 			controller.abort();
 		};
-	}, [credentials, updateStep]);
+	}, [credentials, runFetch]);
 
 	return state;
 }

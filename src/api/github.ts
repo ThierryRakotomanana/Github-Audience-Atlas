@@ -218,6 +218,6 @@ export function estimateCost(
 	return {
 		requestsNeeded,
 		remaining: rateLimit.remaining,
-		willExceed: requestsNeeded > rateLimit.remaining - 50 // keep 50 in reserve
+		willExceed: requestsNeeded > rateLimit.remaining - 50
 	};
 }

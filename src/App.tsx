@@ -14,7 +14,8 @@ function App() {
 		token: ""
 	});
 
-	const { status, steps, error, pct, user, audience } = useAudience(credentials);
+	const { status, steps, error, pct, estimate, user, audience } =
+		useAudience(credentials);
 
 	const isAuthorized = Boolean(credentials.user);
 
@@ -55,6 +56,12 @@ function App() {
 			)}
 
 			{status === "loading" && <LoadingView steps={steps} pct={pct} />}
+			{status === "quota_warning" && (
+				<div>
+					{" "}
+					{`remaining : ${estimate?.remaining} requests needed ${estimate?.requestsNeeded} it will exced ? : ${estimate?.willExceed} `}
+				</div>
+			)}
 			{status === "error" && <div> {`${error}`}</div>}
 			{status === "success" && audience && (
 				<GithubExplorer
