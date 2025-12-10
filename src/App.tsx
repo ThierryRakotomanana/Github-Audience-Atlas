@@ -5,8 +5,8 @@ import { GithubExplorer } from "./components/GithubExplorer";
 import { useAudience } from "./hooks/useAudience";
 import type { Credentials } from "./types/api.types";
 
-import styles from "./App.module.css";
 import { LoadingView } from "./LoadingView";
+import { Stat } from "@/components/Stat";
 
 function App() {
 	const [credentials, setCredentials] = useState<Credentials>({
@@ -17,39 +17,31 @@ function App() {
 	const { status, steps, error, pct, estimate, user, audience } =
 		useAudience(credentials);
 
-	const isAuthorized = Boolean(credentials.user);
+	const isAuthorized = Boolean(credentials.user && credentials.token);
 
-	if (!isAuthorized) {
-		return <CredentialForm onSubmit={setCredentials} />;
-	}
+	if (!isAuthorized) return <CredentialForm onSubmit={setCredentials} />;
 
 	return (
-		<div className={styles.root}>
+		<div className='min-h-svh bg-background flex flex-col'>
 			{user && (
-				<header className={styles.banner}>
-					<img
-						className={styles.bannerAvatar}
-						src={user.avatar_url}
-						alt={`${user.login}'s avatar`}
-						width={38}
-						height={38}
-					/>
-					<div className={styles.bannerInfo}>
-						<p className={styles.bannerName}>{user.name ?? user.login}</p>
-						<p className={styles.bannerHandle}>@{user.login}</p>
-					</div>
-					<div className={styles.stats}>
-						<div className={styles.stat}>
-							<span className={styles.statValue}>
-								{user.followers.toLocaleString()}
-							</span>
-							<span className={styles.statLabel}>Followers</span>
+				<header className='border-b border-border bg-card'>
+					<div className='max-w-6xl mx-auto px-6 py-3 flex items-center gap-4'>
+						<img
+							src={user.avatar_url}
+							alt={user.login}
+							className='w-9 h-9 rounded-full border border-border shrink-0'
+						/>
+						<div className='flex-1 min-w-0'>
+							<p className='text-sm font-medium text-card-foreground truncate'>
+								{user.name ?? user.login}
+							</p>
+							<p className='text-xs text-muted-foreground font-mono'>
+								@{user.login}
+							</p>
 						</div>
-						<div className={styles.stat}>
-							<span className={styles.statValue}>
-								{user.following.toLocaleString()}
-							</span>
-							<span className={styles.statLabel}>Following</span>
+						<div className='flex items-center gap-6 shrink-0'>
+							<Stat label='Followers' value={user.followers} />
+							<Stat label='Following' value={user.following} />
 						</div>
 					</div>
 				</header>
