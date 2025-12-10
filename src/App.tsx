@@ -20,7 +20,7 @@ function App() {
 	const isAuthorized = Boolean(credentials.user);
 
 	if (!isAuthorized) {
-		return <CredentialForm handleCredentials={setCredentials} />;
+		return <CredentialForm onSubmit={setCredentials} />;
 	}
 
 	return (
