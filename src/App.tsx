@@ -5,7 +5,7 @@ import { GithubExplorer } from "./components/GithubExplorer";
 import { useAudience } from "./hooks/useAudience";
 import type { Credentials } from "./types/api.types";
 
-import { LoadingView } from "./LoadingView";
+import { LoadingView } from "./components/LoadingView";
 import { Stat } from "@/components/Stat";
 
 function App() {
