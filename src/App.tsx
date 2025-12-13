@@ -7,6 +7,7 @@ import type { Credentials } from "./types/api.types";
 
 import { LoadingView } from "./components/LoadingView";
 import { Stat } from "@/components/Stat";
+import { ErrorView } from "@/components/ErrorView";
 
 function App() {
 	const [credentials, setCredentials] = useState<Credentials>({
@@ -14,7 +15,7 @@ function App() {
 		token: ""
 	});
 
-	const { status, steps, error, pct, estimate, user, audience } =
+	const { status, steps, error, pct, estimate, user, audience, resetAt } =
 		useAudience(credentials);
 
 	const isAuthorized = Boolean(credentials.user && credentials.token);
@@ -54,7 +55,13 @@ function App() {
 					{`remaining : ${estimate?.remaining} requests needed ${estimate?.requestsNeeded} it will exced ? : ${estimate?.willExceed} `}
 				</div>
 			)}
-			{status === "error" && <div> {`${error}`}</div>}
+			{status === "error" && error && (
+				<ErrorView
+					message={error}
+					resetAt={resetAt}
+					onRetry={() => setCredentials({ user: "", token: "" })}
+				/>
+			)}
 			{status === "success" && audience && (
 				<GithubExplorer
 					followers={audience.followers}

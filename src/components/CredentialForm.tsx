@@ -62,7 +62,7 @@ export default function CredentialForm({
 								value={form.user}
 								onChange={(e) => setForm((f) => ({ ...f, user: e.target.value }))}
 								className='pl-9 font-mono text-sm focus-visible:ring-primary'
-								autoComplete='username'
+								autoComplete='off'
 								spellCheck={false}
 							/>
 						</div>
@@ -83,7 +83,7 @@ export default function CredentialForm({
 								value={form.token}
 								onChange={(e) => setForm((f) => ({ ...f, token: e.target.value }))}
 								className='pl-9 font-mono text-sm focus-visible:ring-primary'
-								autoComplete='current-password'
+								autoComplete='off'
 								spellCheck={false}
 							/>
 						</div>

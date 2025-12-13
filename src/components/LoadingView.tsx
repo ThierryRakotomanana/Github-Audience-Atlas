@@ -1,5 +1,5 @@
 import { Progress } from "@/components/ui/progress";
-import type { Step } from "../types";
+import type { Step } from "../types/api.types";
 
 const CheckIcon = () => (
 	<svg className='w-4 h-4 text-primary' viewBox='0 0 16 16' fill='none'>
