@@ -46,6 +46,12 @@
 	--radius-2xl: calc(var(--radius) * 1.8);
 	--radius-3xl: calc(var(--radius) * 2.2);
 	--radius-4xl: calc(var(--radius) * 2.6);
+	--background-image-magic-trinity: linear-gradient(
+		135deg,
+		#60a5fa 0%,
+		#a78bfa 50%,
+		#34d399 100%
+	);
 }
 
 :root {

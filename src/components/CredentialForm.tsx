@@ -28,23 +28,27 @@ export default function CredentialForm({
 	const valid = form.user.trim() && form.token.trim();
 
 	return (
-		<div className='min-h-svh flex items-center justify-center bg-background p-8'>
-			<Card className='w-full max-w-sm border-border shadow-lg'>
-				<CardHeader className='items-center text-center gap-3 pb-2'>
+		<div className='min-h-svh flex flex-col items-center justify-center bg-background p-8'>
+			<div className='flex flex-col gap-4 justify-center mb-6 text-center'>
+				<div className='text-5xl'>🌍</div>
+				<h1 className='text-2xl font-extrabold bg-magic-trinity bg-clip-text text-transparent'>
+					AUDIENCE ATLAS
+				</h1>
+			</div>
+			<Card className='w-full max-w-md border-border shadow-lg'>
+				<CardHeader className='flex flex-row gap-5 justify-between pb-0'>
 					<div className='w-11 h-11 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary'>
 						<GithubIcon />
 					</div>
 					<div>
-						<h1 className='text-xl font-medium tracking-tight text-card-foreground'>
-							Audience Atlas
-						</h1>
-						<p className='text-sm text-muted-foreground mt-1 leading-snug'>
-							Connect your GitHub account
-							<br />
-							to explore your audience
+						<p className='text-sm text-muted-foreground leading-snug'>
+							Connect your GitHub account to explore your audience
 						</p>
 					</div>
 				</CardHeader>
+				<div className='flex justify-center'>
+					<div className='w-[90%] items-center h-0.5 bg-primary/30 mt-4 mb-2'></div>
+				</div>
 
 				<CardContent className='pt-4 flex flex-col gap-5'>
 					<div className='flex flex-col gap-2'>
@@ -69,11 +73,17 @@ export default function CredentialForm({
 					</div>
 
 					<div className='flex flex-col gap-2'>
-						<Label
-							htmlFor='token'
-							className='text-xs font-medium text-muted-foreground'>
-							Personal Access Token
-						</Label>
+						<div className='flex justify-between'>
+							<Label
+								htmlFor='token'
+								className='text-xs font-medium text-muted-foreground'>
+								Personal Access Token
+							</Label>
+							<Label className='text-xs font-medium text-muted-foreground'>
+								5.000 req/h
+							</Label>
+						</div>
+
 						<div className='relative'>
 							<LockIcon />
 							<Input
@@ -117,7 +127,7 @@ export default function CredentialForm({
 						<code className='bg-secondary text-secondary-foreground px-1 py-0.5 rounded text-[11px]'>
 							read:followers
 						</code>{" "}
-						scopes.{" "}
+						scopes. <br />
 						<a
 							href='https://github.com/settings/tokens'
 							className='text-primary hover:underline'
