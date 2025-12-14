@@ -2,22 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import type { Credentials } from "../types/api.types";
-
-const GithubIcon = () => (
-	<svg
-		width='20'
-		height='20'
-		viewBox='0 0 24 24'
-		fill='none'
-		stroke='currentColor'
-		strokeWidth='1.75'
-		strokeLinecap='round'
-		strokeLinejoin='round'>
-		<path d='M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22' />
-	</svg>
-);
 
 export default function CredentialForm({
 	onSubmit
@@ -26,31 +12,21 @@ export default function CredentialForm({
 }) {
 	const [form, setForm] = useState<Credentials>({ user: "", token: "" });
 	const valid = form.user.trim() && form.token.trim();
+	const [showToken, setShowToken] = useState<boolean>(false);
 
 	return (
-		<div className='min-h-svh flex flex-col items-center justify-center bg-background p-8'>
-			<div className='flex flex-col gap-4 justify-center mb-6 text-center'>
+		<div className='min-h-svh flex flex-col items-center justify-center bg-background gap-4'>
+			<div className='flex flex-col gap-3 justify-center mb-6 text-center'>
 				<div className='text-5xl'>🌍</div>
-				<h1 className='text-2xl font-extrabold bg-magic-trinity bg-clip-text text-transparent'>
+				<h1 className='text-3xl font-extrabold tracking-tight bg-magic-trinity bg-clip-text text-transparent'>
 					AUDIENCE ATLAS
 				</h1>
+				<p className='text-xs text-muted-foreground'>
+					followers · following · ghost zone
+				</p>
 			</div>
-			<Card className='w-full max-w-md border-border shadow-lg'>
-				<CardHeader className='flex flex-row gap-5 justify-between pb-0'>
-					<div className='w-11 h-11 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary'>
-						<GithubIcon />
-					</div>
-					<div>
-						<p className='text-sm text-muted-foreground leading-snug'>
-							Connect your GitHub account to explore your audience
-						</p>
-					</div>
-				</CardHeader>
-				<div className='flex justify-center'>
-					<div className='w-[90%] items-center h-0.5 bg-primary/30 mt-4 mb-2'></div>
-				</div>
-
-				<CardContent className='pt-4 flex flex-col gap-5'>
+			<Card className='w-full max-w-md border-border shadow-lg font-light p-4'>
+				<CardContent className='pt-4 pb-0 flex flex-col gap-5'>
 					<div className='flex flex-col gap-2'>
 						<Label
 							htmlFor='user'
@@ -84,12 +60,19 @@ export default function CredentialForm({
 							</Label>
 						</div>
 
-						<div className='relative'>
-							<LockIcon />
+						<div className='relative text-muted-foreground'>
+							<Button
+								onClick={() => {
+									setShowToken((show) => !show);
+								}}
+								variant={"ghost"}
+								className='absolute left-0 hover:bg-none top-1/2 -translate-y-1/2 flex items-center'>
+								{showToken ? "👁" : "🙈"}
+							</Button>
 							<Input
 								id='token'
-								type='password'
-								placeholder='ghp_xxxxxxxxxxxx'
+								type={showToken ? "text" : "password"}
+								placeholder={"ghp_xxxxxxxxxxxx"}
 								value={form.token}
 								onChange={(e) => setForm((f) => ({ ...f, token: e.target.value }))}
 								className='pl-9 font-mono text-sm focus-visible:ring-primary'
@@ -100,31 +83,19 @@ export default function CredentialForm({
 					</div>
 
 					<Button
-						className='w-full mt-1 bg-primary hover:bg-primary/90 text-primary-foreground font-medium'
+						className='w-full mt-1 bg-blue-800 hover:bg-primary/90 text-primary-foreground font-medium p-5'
 						disabled={!valid}
 						onClick={() => valid && onSubmit(form)}>
-						<svg
-							className='w-4 h-4 mr-2'
-							viewBox='0 0 24 24'
-							fill='none'
-							stroke='currentColor'
-							strokeWidth='2'
-							strokeLinecap='round'
-							strokeLinejoin='round'>
-							<path d='M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4' />
-							<polyline points='10 17 15 12 10 7' />
-							<line x1='15' y1='12' x2='3' y2='12' />
-						</svg>
-						Authorize
+						Generate Atlas →
 					</Button>
 
 					<p className='text-center text-xs text-muted-foreground leading-relaxed border-t border-border pt-4'>
 						Token requires{" "}
-						<code className='bg-secondary text-secondary-foreground px-1 py-0.5 rounded text-[11px]'>
+						<code className='bg-secondary text-indigo-900 px-1 py-0.5 rounded text-[11px]'>
 							read:user
 						</code>{" "}
 						and{" "}
-						<code className='bg-secondary text-secondary-foreground px-1 py-0.5 rounded text-[11px]'>
+						<code className='bg-secondary text-purple-950 px-1 py-0.5 rounded text-[11px]'>
 							read:followers
 						</code>{" "}
 						scopes. <br />
@@ -135,6 +106,17 @@ export default function CredentialForm({
 							rel='noopener noreferrer'>
 							Generate one →
 						</a>
+						<p className='mt-3'>
+							✓ Add{" "}
+							<code className='bg-secondary text-blue-600 px-1 py-0.5 rounded text-[11px] mt-2'>
+								user:follow
+							</code>{" "}
+							scope to unlock{" "}
+							<code className='bg-secondary text-green-600 px-1 py-0.5 rounded text-[11px]'>
+								Unfollow buttons
+							</code>{" "}
+							scopes.
+						</p>
 					</p>
 				</CardContent>
 			</Card>
@@ -153,18 +135,5 @@ const UserIcon = () => (
 		strokeLinejoin='round'>
 		<path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2' />
 		<circle cx='12' cy='7' r='4' />
-	</svg>
-);
-const LockIcon = () => (
-	<svg
-		className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none'
-		viewBox='0 0 24 24'
-		fill='none'
-		stroke='currentColor'
-		strokeWidth='2'
-		strokeLinecap='round'
-		strokeLinejoin='round'>
-		<rect x='3' y='11' width='18' height='11' rx='2' ry='2' />
-		<path d='M7 11V7a5 5 0 0 1 10 0v4' />
 	</svg>
 );
