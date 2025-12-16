@@ -15,7 +15,8 @@
 		"prepare": "husky",
 		"changeset": "changeset",
 		"changeset:version": "changeset version",
-		"changeset:publish": "changeset publish"
+		"changeset:publish": "changeset publish",
+		"test": "vitest"
 	},
 	"lint-staged": {
 		"*.{ts,tsx}": [
