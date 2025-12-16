@@ -37,7 +37,9 @@ function App() {
 								{user.name ?? user.login}
 							</p>
 							<p className='text-xs text-muted-foreground font-mono'>
-								@{user.login}
+								<a href={user.html_url} className='' target='_blank'>
+									@{user.login}
+								</a>
 							</p>
 						</div>
 						<div className='flex items-center gap-6 shrink-0'>
