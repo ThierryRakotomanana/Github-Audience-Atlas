@@ -17,6 +17,7 @@ import {
 	GithubApiError,
 	RateLimitError
 } from "../api/github";
+import { geocode } from "../lib/geocode";
 
 const INITIAL_STEPS: Step[] = [
 	{
@@ -204,6 +205,8 @@ export function useAudience(credentials: Credentials): UseAudienceReturn {
 				updateStep("profiles", { status: "done" });
 
 				updateStep("done", { status: "active", detail: "computing…" });
+				const AssociatedProfileByCountry = geocode([...audienceProfiles.values()]);
+				console.log(AssociatedProfileByCountry);
 				const resolve = (rawAudiences: GithubUser[]): GithubProfile[] => {
 					return rawAudiences.flatMap((rawAudience) => {
 						const profile = audienceProfiles.get(rawAudience.login);
