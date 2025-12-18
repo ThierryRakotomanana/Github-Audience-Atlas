@@ -1,25 +1,38 @@
-import { CDICT } from "../constant/lookupTables";
+import { CDICT } from "../constants/lookupTables";
 import type { GithubProfile } from "../types/api.types";
 
-export const cleanLoc = (raw: string | null): string => {
-	if (!raw) return "";
-	let s = raw
-		.replace(/[\u{1F1E0}-\u{1F1FF}]{2}/gu, "")
-		.replace(/[\u{1F300}-\u{1FFFF}\u{2600}-\u{26FF}]/gu, "");
-	s = s.split(/[\\/|]/)[0];
-	s = s.replace(/\(.*?\)/g, "");
-	s = s.replace(
-		/\b(remote|currently|based in|living in|from|near|@|formerly|ex-)\b/gi,
-		""
-	);
-	return s.trim().toLowerCase().replace(/\s+/g, " ");
+export const cleanLoc = (raw: string | null): string[] => {
+	if (!raw) return [];
+	const parts = raw.split(new RegExp("[()/|\\s]+"));
+	const pieces: string[] = [];
+	for (let chunk of parts) {
+		chunk = chunk.replace(
+			/\b(remote|currently|based in|living in|from|near|@|formerly|ex-)\b/gi,
+			""
+		);
+		chunk = chunk.replace(/[^a-zA-Z\p{L}\u{1F1E6}-\u{1F1FF}]/gu, "");
+		chunk = chunk.replace(
+			/(?<![\u{1F1E6}-\u{1F1FF}])[\u{1F1E6}-\u{1F1FF}](?![\u{1F1E6}-\u{1F1FF}])/gu,
+			""
+		);
+		const cleaned = chunk.trim().toLowerCase();
+		if (cleaned) {
+			pieces.push(cleaned);
+		}
+	}
+
+	if (pieces.length === 0) return [];
+
+	const fullConcatenated = pieces.join(" ");
+	return [fullConcatenated, ...pieces];
 };
 
-export const guessCountry = (location: string) => {
-	if (CDICT[location as keyof typeof CDICT])
-		return CDICT[location as keyof typeof CDICT];
-	for (const [key, value] of Object.entries(CDICT)) {
-		if (location.includes(key)) return value;
+export const guessCountry = (locations: string[]) => {
+	for (let index = 0; index < locations.length; index++) {
+		const location = locations[index];
+		for (const [key, value] of Object.entries(CDICT)) {
+			if (location.includes(key)) return value;
+		}
 	}
 };
 

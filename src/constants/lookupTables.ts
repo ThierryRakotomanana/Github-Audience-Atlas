@@ -1,3 +1,5 @@
+import { flagToCodeMap } from "./flags";
+
 export const CDICT_EXTENDEED = {
 	// INDIA
 	"calcutta": "IN",
@@ -2846,5 +2848,6 @@ export const CDICT = {
 	"colombo": "LK",
 	"kathmandu": "NP",
 	"tbilisi": "GE",
-	...CDICT_EXTENDEED
+	...CDICT_EXTENDEED,
+	...flagToCodeMap
 };
