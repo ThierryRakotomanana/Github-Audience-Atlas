@@ -1,3 +1,4 @@
+import { countryCodesSet } from "../constants/countries";
 import { CDICT } from "../constants/lookupTables";
 import type { GithubProfile } from "../types/api.types";
 
@@ -30,8 +31,9 @@ export const cleanLoc = (raw: string | null): string[] => {
 export const guessCountry = (locations: string[]) => {
 	for (let index = 0; index < locations.length; index++) {
 		const location = locations[index];
-		for (const [key, value] of Object.entries(CDICT)) {
-			if (location.includes(key)) return value;
+		if (countryCodesSet.has(location)) return location;
+		for (const [city, country] of Object.entries(CDICT)) {
+			if (location.includes(city)) return country;
 		}
 	}
 };
