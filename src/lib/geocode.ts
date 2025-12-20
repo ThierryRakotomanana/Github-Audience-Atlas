@@ -1,5 +1,7 @@
-import { countryCodesSet } from "../constants/countries";
+import { delay } from "../api/github";
+import { CN, countryCodesSet } from "../constants/countries";
 import { CDICT } from "../constants/lookupTables";
+import { SKIP } from "../constants/unlocated";
 import type { GithubProfile } from "../types/api.types";
 
 export const cleanLoc = (raw: string | null): string[] => {
@@ -24,27 +26,59 @@ export const cleanLoc = (raw: string | null): string[] => {
 
 	if (pieces.length === 0) return [];
 
-	const fullConcatenated = pieces.join(" ");
-	return [fullConcatenated, ...pieces];
+	return pieces.length === 1 ? [...pieces] : [pieces.join(" "), ...pieces];
 };
 
 export const guessCountry = (locations: string[]) => {
+	if (locations.length === 0) return null;
+	for (const [code, country] of Object.entries(CN)) {
+		const containCountry = locations[0].includes(country.toLowerCase());
+		if (containCountry) return code;
+	}
+
 	for (let index = 0; index < locations.length; index++) {
 		const location = locations[index];
-		if (countryCodesSet.has(location)) return location;
+		if (SKIP.has(location)) return "SKIP";
+	}
+
+	for (let index = 0; index < locations.length; index++) {
+		const location = locations[index];
+		if (countryCodesSet.has(location.toUpperCase())) return location;
 		for (const [city, country] of Object.entries(CDICT)) {
-			if (location.includes(city)) return country;
+			if (city.includes(location)) return country;
 		}
 	}
+	return null;
 };
 
-export function geocode(rawData: GithubProfile[]) {
+export async function geocode(
+	rawData: GithubProfile[],
+	onProgress: ({ done, total }: { done: number; total: number }) => void
+) {
 	const pcMap = new Map();
+	const needLoc = new Map();
+	const skipped = new Map();
+	console.log(rawData.length);
+	let i = 0;
 	for (const profile of rawData) {
 		const clean = cleanLoc(profile.location);
+		console.log(clean);
+		onProgress({ done: pcMap.size, total: rawData.length });
 		const country = guessCountry(clean);
-		if (!country) continue;
-		pcMap.set(profile.login, country);
+		console.log(country, i++);
+		if (!country) {
+			needLoc.set(profile.location, profile);
+			continue;
+		}
+
+		if (country == "SKIP") {
+			skipped.set(profile.location, profile);
+			continue;
+		}
+
+		pcMap.set(profile.login, { ...profile, location: country });
 	}
-	return pcMap;
+	await delay(550);
+	console.log(pcMap.size + needLoc.size + skipped.size);
+	return { pcMap, needLoc, skipped };
 }

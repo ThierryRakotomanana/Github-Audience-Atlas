@@ -27,6 +27,7 @@ const INITIAL_STEPS: Step[] = [
 		detail: ""
 	},
 	{ id: "profiles", label: "Loading profiles", status: "idle", detail: "" },
+	{ id: "geocode", label: "Finding user's country", status: "idle", detail: "" },
 	{ id: "done", label: "Building audience", status: "idle", detail: "" }
 ];
 export type FetchStatus =
@@ -197,15 +198,24 @@ export function useAudience(credentials: Credentials): UseAudienceReturn {
 						updateStep("profiles", { detail: `${done} / ${total}` });
 						dispatch({
 							type: "PROGRESS",
-							pct: 20 + Math.round((done / total) * 75)
+							pct: 20 + Math.round((done / total) * 55)
 						});
 					}
 				);
 
 				updateStep("profiles", { status: "done" });
 
-				updateStep("done", { status: "active", detail: "computing…" });
-				const AssociatedProfileByCountry = geocode([...audienceProfiles.values()]);
+				updateStep("geocode", { status: "active", detail: "computing…" });
+				const AssociatedProfileByCountry = await geocode(
+					[...audienceProfiles.values()],
+					({ done, total }) => {
+						updateStep("geocode", { detail: `${done} / ${total}` });
+						dispatch({
+							type: "PROGRESS",
+							pct: 75 + Math.round((done / total) * 25)
+						});
+					}
+				);
 				console.log(AssociatedProfileByCountry);
 				const resolve = (rawAudiences: GithubUser[]): GithubProfile[] => {
 					return rawAudiences.flatMap((rawAudience) => {
