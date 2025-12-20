@@ -15,7 +15,8 @@
 		"prepare": "husky",
 		"changeset": "changeset",
 		"changeset:version": "changeset version",
-		"changeset:publish": "changeset publish"
+		"changeset:publish": "changeset publish",
+		"test": "vitest"
 	},
 	"lint-staged": {
 		"*.{ts,tsx}": [
@@ -35,20 +36,28 @@
 		"@commitlint/cli": "^21.0.1",
 		"@commitlint/config-conventional": "^21.0.1",
 		"@eslint/js": "^10.0.1",
+		"@testing-library/dom": "^10.4.1",
+		"@testing-library/react": "^16.3.2",
+		"@testing-library/user-event": "^14.6.1",
 		"@types/node": "^24.12.2",
-		"@types/react": "^19.2.14",
+		"@types/react": "^19.2.15",
 		"@types/react-dom": "^19.2.3",
 		"@vitejs/plugin-react": "^6.0.1",
+		"@vitest/coverage-v8": "^4.1.8",
 		"eslint": "^10.2.1",
 		"eslint-plugin-react-hooks": "^7.1.1",
 		"eslint-plugin-react-refresh": "^0.5.2",
 		"globals": "^17.5.0",
 		"husky": "^9.1.7",
+		"jsdom": "^29.1.1",
 		"lint-staged": "^17.0.4",
+		"msw": "^2.14.6",
+		"playwright": "^1.60.0",
 		"prettier": "3.8.3",
 		"typescript": "~6.0.2",
 		"typescript-eslint": "^8.58.2",
 		"vite": "^8.0.10",
+		"vitest": "^4.1.8",
 		"zod": "^4.3.6"
 	}
 }
