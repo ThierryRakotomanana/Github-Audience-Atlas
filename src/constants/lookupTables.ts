@@ -1,4 +1,7 @@
 import { flagToCodeMap } from "./flags";
+import { USA } from "./america";
+import { CANADA } from "./canada";
+import { MADAGASCAR } from "./madagascar";
 
 export const CDICT_EXTENDEED = {
 	// INDIA
@@ -351,9 +354,6 @@ export const CDICT_EXTENDEED = {
 	"djibouti": "DJ",
 	"mogadishu": "SO",
 	"hargeisa": "SO",
-	"antananarivo": "MG",
-	"toamasina": "MG",
-	"fianarantsoa": "MG",
 	"port louis": "MU",
 	"beau bassin": "MU",
 	"quatre bornes": "MU",
@@ -2625,7 +2625,6 @@ export const CDICT = {
 	"moldova": "MD",
 	"montenegro": "ME",
 	"north macedonia": "MK",
-	"madagascar": "MG",
 	"tanzania": "TZ",
 	"mauritius": "MU",
 	"bolivia": "BO",
@@ -2849,5 +2848,8 @@ export const CDICT = {
 	"kathmandu": "NP",
 	"tbilisi": "GE",
 	...CDICT_EXTENDEED,
-	...flagToCodeMap
+	...flagToCodeMap,
+	...USA,
+	...CANADA,
+	...MADAGASCAR
 };
