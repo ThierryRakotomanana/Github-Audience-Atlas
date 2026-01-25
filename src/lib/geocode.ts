@@ -4,20 +4,20 @@ import { CDICT } from "../constants/lookupTables";
 import { SKIP } from "../constants/unlocated";
 import type { GithubProfile } from "../types/api.types";
 
+const NOISE_WORDS =
+	/\b(remote|currently|based in|living in|from|near|@|formerly|ex-)\b/gi;
+const NON_LETTER = /[^a-zA-Z\p{L}\u{1F1E6}-\u{1F1FF}]/gu;
+const LONE_FLAG =
+	/(?<![\u{1F1E6}-\u{1F1FF}])[\u{1F1E6}-\u{1F1FF}](?![\u{1F1E6}-\u{1F1FF}])/gu;
+
 export const cleanLoc = (raw: string | null): string[] => {
 	if (!raw) return [];
 	const parts = raw.split(new RegExp("[()/|\\s]+"));
 	const pieces: string[] = [];
 	for (let chunk of parts) {
-		chunk = chunk.replace(
-			/\b(remote|currently|based in|living in|from|near|@|formerly|ex-)\b/gi,
-			""
-		);
-		chunk = chunk.replace(/[^a-zA-Z\p{L}\u{1F1E6}-\u{1F1FF}]/gu, "");
-		chunk = chunk.replace(
-			/(?<![\u{1F1E6}-\u{1F1FF}])[\u{1F1E6}-\u{1F1FF}](?![\u{1F1E6}-\u{1F1FF}])/gu,
-			""
-		);
+		chunk = chunk.replace(NOISE_WORDS, "");
+		chunk = chunk.replace(NON_LETTER, "");
+		chunk = chunk.replace(LONE_FLAG, "");
 		const cleaned = chunk.trim().toLowerCase();
 		if (cleaned) {
 			pieces.push(cleaned);
