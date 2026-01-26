@@ -9,20 +9,27 @@ const NOISE_WORDS =
 const NON_LETTER = /[^a-zA-Z\p{L}\u{1F1E6}-\u{1F1FF}]/gu;
 const LONE_FLAG =
 	/(?<![\u{1F1E6}-\u{1F1FF}])[\u{1F1E6}-\u{1F1FF}](?![\u{1F1E6}-\u{1F1FF}])/gu;
+const DELIMITER =
+	/(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|[()|/\s\-_.,;:!?@#&[\]{}<>*+=%^~$`"\\]+/;
+
+const normalise = (s: string): string => s.normalize("NFD").replace(/\p{Mn}/gu, "");
 
 export const cleanLoc = (raw: string | null): string[] => {
-	if (!raw) return [];
-	const parts = raw.split(new RegExp("[()/|\\s]+"));
-	const pieces: string[] = [];
-	for (let chunk of parts) {
-		chunk = chunk.replace(NOISE_WORDS, "");
-		chunk = chunk.replace(NON_LETTER, "");
-		chunk = chunk.replace(LONE_FLAG, "");
-		const cleaned = chunk.trim().toLowerCase();
-		if (cleaned) {
-			pieces.push(cleaned);
-		}
-	}
+	if (!raw?.trim()) return [];
+
+	const pieces = raw
+		.split(DELIMITER)
+		.map((chunk) =>
+			normalise(
+				chunk
+					.replace(NOISE_WORDS, "")
+					.replace(NON_LETTER, "")
+					.replace(LONE_FLAG, "")
+					.trim()
+					.toLowerCase()
+			)
+		)
+		.filter(Boolean);
 
 	if (pieces.length === 0) return [];
 
