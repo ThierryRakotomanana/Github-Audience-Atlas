@@ -1,4 +1,5 @@
 import { delay } from "../api/github";
+import { ALIASES } from "../constants/aliases";
 import { CN, countryCodesSet } from "../constants/countries";
 import { CDICT } from "../constants/lookupTables";
 import { SKIP } from "../constants/unlocated";
@@ -45,6 +46,9 @@ export const cleanLoc = (raw: string | null): string[] => {
 
 export const guessCountry = (locations: string[]) => {
 	if (locations.length === 0) return null;
+	const full = locations[0];
+
+	if (ALIASES[full]) return ALIASES[full];
 
 	for (const token of locations) {
 		const country = CN[token as keyof typeof CN];
