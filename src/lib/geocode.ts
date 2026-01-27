@@ -32,15 +32,23 @@ export const cleanLoc = (raw: string | null): string[] => {
 		.filter(Boolean);
 
 	if (pieces.length === 0) return [];
+	if (pieces.length === 1) return pieces;
 
-	return pieces.length === 1 ? [...pieces] : [pieces.join(" "), ...pieces];
+	const ngrams: string[] = [];
+	for (let len = pieces.length; len >= 1; len--) {
+		for (let start = 0; start <= pieces.length - len; start++) {
+			ngrams.push(pieces.slice(start, start + len).join(" "));
+		}
+	}
+	return [...new Set(ngrams)];
 };
 
 export const guessCountry = (locations: string[]) => {
 	if (locations.length === 0) return null;
-	for (const [code, country] of Object.entries(CN)) {
-		const containCountry = locations[0].includes(country.toLowerCase());
-		if (containCountry) return code;
+
+	for (const token of locations) {
+		const country = CN[token as keyof typeof CN];
+		if (country) return country;
 	}
 
 	for (let index = 0; index < locations.length; index++) {
