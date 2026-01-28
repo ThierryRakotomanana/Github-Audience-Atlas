@@ -1,5 +1,6 @@
 import { delay } from "../api/github";
 import { ALIASES } from "../constants/aliases";
+import { ISO_WORD_BLOCKLIST } from "../constants/commonWords";
 import { CN, countryCodesSet } from "../constants/countries";
 import { CDICT } from "../constants/lookupTables";
 import { SKIP } from "../constants/unlocated";
@@ -55,18 +56,23 @@ export const guessCountry = (locations: string[]) => {
 		if (country) return country;
 	}
 
-	for (let index = 0; index < locations.length; index++) {
-		const location = locations[index];
-		if (SKIP.has(location)) return "SKIP";
-	}
+	for (const TOKEN of locations) {
+		const token = TOKEN.toLowerCase();
+		if (SKIP.has(token)) return "SKIP";
+		if (ALIASES[token]) return ALIASES[token];
+		if (
+			token.length === 2
+			&& !ISO_WORD_BLOCKLIST.has(token)
+			&& countryCodesSet.has(token.toUpperCase())
+		) {
+			return token.toUpperCase();
+		}
 
-	for (let index = 0; index < locations.length; index++) {
-		const location = locations[index];
-		if (countryCodesSet.has(location.toUpperCase())) return location;
 		for (const [city, country] of Object.entries(CDICT)) {
-			if (city.includes(location)) return country;
+			if (token === city.toLowerCase()) return country;
 		}
 	}
+
 	return null;
 };
 
