@@ -6,6 +6,12 @@ import { CDICT } from "../constants/lookupTables";
 import { SKIP } from "../constants/unlocated";
 import type { GithubProfile } from "../types/api.types";
 
+export type GeocodeResult = {
+	pcMap: Map<string, string>;
+	needLoc: Map<string, string | null>;
+	skipped: Map<string, string>;
+};
+
 const NOISE_WORDS =
 	/\b(remote|currently|based in|living in|from|near|@|formerly|ex-)\b/gi;
 const NON_LETTER = /[^a-zA-Z\p{L}\u{1F1E6}-\u{1F1FF}]/gu;
@@ -79,31 +85,34 @@ export const guessCountry = (locations: string[]) => {
 export async function geocode(
 	rawData: GithubProfile[],
 	onProgress: ({ done, total }: { done: number; total: number }) => void
-) {
-	const pcMap = new Map();
-	const needLoc = new Map();
-	const skipped = new Map();
-	console.log(rawData.length);
-	let i = 0;
-	for (const profile of rawData) {
+): Promise<GeocodeResult> {
+	const pcMap = new Map<string, string>();
+	const needLoc = new Map<string, string | null>();
+	const skipped = new Map<string, string>();
+
+	const total = rawData.length;
+
+	for (let i = 0; i < total; i++) {
+		const profile = rawData[i];
 		const clean = cleanLoc(profile.location);
-		console.log(clean);
-		onProgress({ done: pcMap.size, total: rawData.length });
 		const country = guessCountry(clean);
-		console.log(country, i++);
-		if (!country) {
-			needLoc.set(profile.location, profile);
-			continue;
+
+		if (!country && 0 < clean.length) {
+			needLoc.set(profile.login, profile.location);
+		} else if (country === "SKIP") {
+			skipped.set(clean.join("|"), "SKIP");
+		} else if (!country && clean.length == 0) {
+			skipped.set(clean.join("|"), "SKIP");
+		} else {
+			pcMap.set(
+				profile.login,
+				`location: ${profile.location}, country : ${country}`
+			);
 		}
 
-		if (country == "SKIP") {
-			skipped.set(profile.location, profile);
-			continue;
-		}
-
-		pcMap.set(profile.login, { ...profile, location: country });
+		onProgress({ done: i + 1, total });
+		await delay(10);
 	}
-	await delay(550);
-	console.log(pcMap.size + needLoc.size + skipped.size);
+
 	return { pcMap, needLoc, skipped };
 }
