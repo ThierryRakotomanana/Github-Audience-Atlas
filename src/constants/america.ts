@@ -1,4 +1,5 @@
 export const USA = {
+	"California": "US",
 	"nyc": "US",
 	"houston": "US",
 	"phoenix": "US",

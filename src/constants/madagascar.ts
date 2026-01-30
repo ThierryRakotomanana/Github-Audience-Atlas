@@ -99,5 +99,7 @@ export const MADAGASCAR = {
 	"miarinarivo": "MG",
 	"analalava": "MG",
 	"ambohimahasoa": "MG",
-	"besalampy": "MG"
+	"besalampy": "MG",
+	"ivandry": "MG",
+	"antananarive": "MG"
 };
