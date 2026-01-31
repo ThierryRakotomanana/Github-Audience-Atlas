@@ -51,7 +51,7 @@ export type AudienceData = {
 	ghosts: GithubProfile[];
 };
 
-export type StepId = "fetch" | "profiles" | "done";
+export type StepId = "fetch" | "profiles" | "geocode" | "done";
 export type StepStatus = "idle" | "active" | "done";
 
 export type Step = {

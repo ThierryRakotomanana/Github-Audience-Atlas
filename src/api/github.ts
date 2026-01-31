@@ -30,7 +30,6 @@ export class RateLimitError extends Error {
 }
 
 export function parseRateLimit(headers: Headers): RateLimit {
-	console.log(headers.get("Reset-After"));
 	return {
 		limit: parseInt(headers.get("X-RateLimit-Limit") ?? "60"),
 		remaining: parseInt(headers.get("X-RateLimit-Remaining") ?? "0"),
