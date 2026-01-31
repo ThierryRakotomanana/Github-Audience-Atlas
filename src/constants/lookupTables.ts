@@ -2,6 +2,13 @@ import { flagToCodeMap } from "./flags";
 import { USA } from "./america";
 import { CANADA } from "./canada";
 import { MADAGASCAR } from "./madagascar";
+import { PORTUGAL } from "./portugal";
+import { CHINA } from "./china";
+import { SWEDEN } from "./sweden";
+import { GERMANY } from "./Germany";
+import { MALAWI } from "./malawi";
+import { MOROCCO } from "./morocco";
+import { NIGERIA } from "./nigera";
 
 export const CDICT_EXTENDEED = {
 	// INDIA
@@ -2851,5 +2858,13 @@ export const CDICT = {
 	...flagToCodeMap,
 	...USA,
 	...CANADA,
-	...MADAGASCAR
+	...MADAGASCAR,
+	...PORTUGAL,
+	...CHINA,
+	...SWEDEN,
+	...GERMANY,
+	...MALAWI,
+	...MOROCCO,
+	...NIGERIA,
+	...PORTUGAL
 };
