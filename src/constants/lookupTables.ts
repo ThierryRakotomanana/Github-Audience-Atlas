@@ -1,14 +1,16 @@
 import { flagToCodeMap } from "./flags";
-import { USA } from "./america";
-import { CANADA } from "./canada";
-import { MADAGASCAR } from "./madagascar";
-import { PORTUGAL } from "./portugal";
-import { CHINA } from "./china";
-import { SWEDEN } from "./sweden";
-import { GERMANY } from "./Germany";
-import { MALAWI } from "./malawi";
-import { MOROCCO } from "./morocco";
-import { NIGERIA } from "./nigera";
+import { USA } from "./countries/america";
+import { CANADA } from "./countries/canada";
+import { MADAGASCAR } from "./countries/madagascar";
+import { PORTUGAL } from "./countries/portugal";
+import { CHINA } from "./countries/china";
+import { SWEDEN } from "./countries/sweden";
+import { GERMANY } from "./countries/Germany";
+import { MALAWI } from "./countries/malawi";
+import { MOROCCO } from "./countries/morocco";
+import { NIGERIA } from "./countries/nigera";
+import { UAE } from "./countries/uae";
+import { AFGHANISTAN } from "./countries/afghanistan";
 
 export const CDICT_EXTENDEED = {
 	// INDIA
@@ -111,6 +113,8 @@ export const CDICT_EXTENDEED = {
 	"bombay": "IN",
 
 	// BRAZIL
+
+	"Brasil": "BR",
 	"belo horizonte": "BR",
 	"porto alegre": "BR",
 	"fortaleza": "BR",
@@ -1719,6 +1723,7 @@ export const CDICT_EXTENDEED = {
 	"potosi": "BO",
 	"sucre": "BO",
 	"tarija": "BO",
+	"Paraguay": "PY",
 	"asunción": "PY",
 	"asuncion": "PY",
 	"ciudad del este": "PY",
@@ -2854,6 +2859,59 @@ export const CDICT = {
 	"colombo": "LK",
 	"kathmandu": "NP",
 	"tbilisi": "GE",
+	// BJ
+	"benin republic": "BJ",
+	// BY
+	"belarus": "BY",
+	//
+	"hksar": "CN",
+	// CY
+	"lefkosa": "CY",
+	// DE
+	"ger": "DE",
+	"hannover": "DE",
+	// DK
+	"copenhagen": "DK",
+	// ET
+	"addis": "ET",
+	// FI
+	"helsinki": "FI",
+	// FR
+	// IN
+	"haryana": "IN",
+	"nuh mewat": "IN",
+	"vasai": "IN",
+	"west bengal": "IN",
+	// IR
+	"کرج": "IR",
+	// KR
+	"republic of korea": "KR",
+	// MA
+	"maroc": "MA",
+	"mohammedia": "MA",
+	// MD
+	"republic of moldova": "MD",
+	// MK
+	"macedonia": "MK",
+	//RU
+	"prim kr": "RU",
+	"primorsky": "RU",
+	// TL
+	"timor leste": "TL",
+	// TR
+	"gebze": "TR",
+	"kocaeli": "TR",
+	"turkiye": "TR",
+	"bainbridge island": "US",
+	"los gatos": "US",
+	"menlo park": "US",
+	// VN
+	"bac giang": "VN",
+	"bac ninh": "VN",
+	"dong anh": "VN",
+	"hcm": "VN",
+	"soc son": "VN",
+	"sanaa": "YE",
 	...CDICT_EXTENDEED,
 	...flagToCodeMap,
 	...USA,
@@ -2866,5 +2924,7 @@ export const CDICT = {
 	...MALAWI,
 	...MOROCCO,
 	...NIGERIA,
-	...PORTUGAL
+	...PORTUGAL,
+	...UAE,
+	...AFGHANISTAN
 };

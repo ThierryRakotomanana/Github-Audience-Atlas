@@ -1,5 +1,4 @@
 import { delay } from "../api/github";
-import { ALIASES } from "../constants/aliases";
 import { ISO_WORD_BLOCKLIST } from "../constants/commonWords";
 import { CN, countryCodesSet } from "../constants/countries";
 import { CDICT } from "../constants/lookupTables";
@@ -53,9 +52,6 @@ export const cleanLoc = (raw: string | null): string[] => {
 
 export const guessCountry = (locations: string[]) => {
 	if (locations.length === 0) return null;
-	const full = locations[0];
-
-	if (ALIASES[full]) return ALIASES[full];
 
 	for (const token of locations) {
 		const country = CN[token as keyof typeof CN];
@@ -65,7 +61,6 @@ export const guessCountry = (locations: string[]) => {
 	for (const TOKEN of locations) {
 		const token = TOKEN.toLowerCase();
 		if (SKIP.has(token)) return "SKIP";
-		if (ALIASES[token]) return ALIASES[token];
 		if (
 			token.length === 2
 			&& !ISO_WORD_BLOCKLIST.has(token)
