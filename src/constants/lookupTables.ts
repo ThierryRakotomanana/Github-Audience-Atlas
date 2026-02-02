@@ -11,6 +11,7 @@ import { MOROCCO } from "./countries/morocco";
 import { NIGERIA } from "./countries/nigera";
 import { UAE } from "./countries/uae";
 import { AFGHANISTAN } from "./countries/afghanistan";
+import { countryAliasMap } from "./countries";
 
 export const CDICT_EXTENDEED = {
 	// INDIA
@@ -2619,7 +2620,6 @@ export const CDICT = {
 	"wales": "GB",
 	"great britain": "GB",
 	"united states": "US",
-	"usa": "US",
 	"u.s.a.": "US",
 	"u.s.": "US",
 	"america": "US",
@@ -2912,6 +2912,7 @@ export const CDICT = {
 	"hcm": "VN",
 	"soc son": "VN",
 	"sanaa": "YE",
+	...countryAliasMap,
 	...CDICT_EXTENDEED,
 	...flagToCodeMap,
 	...USA,
