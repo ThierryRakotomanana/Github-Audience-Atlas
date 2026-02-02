@@ -181,7 +181,10 @@ export const USA = {
 	"madison wi": "US",
 	"cheyenne": "US",
 	"casper": "US",
-	// USA (ADDITIONAL TOP METRO AREAS & EXCLUDED MAJOR CITIES)
+	"San Francisco": "US",
+	"Marlborough": "US",
+	"Berkshire County": "US",
+	// USA (ADDITIONAL TOP METRO AREAS)
 	"frisco": "US",
 	"port st. lucie": "US",
 	"santa clarita": "US",
