@@ -24,6 +24,7 @@ export const cleanLoc = (raw: string | null): string[] => {
 	if (!raw?.trim()) return [];
 
 	const pieces = raw
+		.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "")
 		.split(DELIMITER)
 		.map((chunk) =>
 			normalise(
