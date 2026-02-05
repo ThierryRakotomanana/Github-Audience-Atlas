@@ -216,6 +216,7 @@ export function useAudience(credentials: Credentials): UseAudienceReturn {
 						});
 					}
 				);
+				updateStep("geocode", { status: "done" });
 				console.log(AssociatedProfileByCountry);
 				const resolve = (rawAudiences: GithubUser[]): GithubProfile[] => {
 					return rawAudiences.flatMap((rawAudience) => {

@@ -1,136 +1,134 @@
-import {
-	useState,
-	type ChangeEvent,
-	type CSSProperties,
-	type SubmitEvent
-} from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import type { Credentials } from "../types/api.types";
 
-const CredentialForm = (props: {
-	handleCredentials: (credentials: Credentials) => void;
-}) => {
-	const [formData, setFormData] = useState<Credentials>({
-		user: "",
-		token: ""
-	});
-
-	const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-		const { name, value } = e.target;
-		setFormData((prev) => ({
-			...prev,
-			[name]: value
-		}));
-	};
-
-	const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		props.handleCredentials(formData);
-		// Add your authentication logic here
-	};
-
-	// --- Inline Styles ---
-	const styles: Record<string, CSSProperties> = {
-		container: {
-			display: "flex",
-			flexDirection: "column",
-			alignItems: "center",
-			justifyContent: "center",
-			padding: "2rem",
-			backgroundColor: "#f9f9f9",
-			borderRadius: "8px",
-			boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-			width: "320px",
-			margin: "2rem auto",
-			fontFamily: "system-ui, -apple-system, sans-serif"
-		},
-		header: {
-			marginBottom: "1.5rem",
-			color: "#333",
-			fontSize: "1.25rem",
-			fontWeight: "600"
-		},
-		form: {
-			width: "100%",
-			display: "flex",
-			flexDirection: "column",
-			gap: "1rem"
-		},
-		inputGroup: {
-			display: "flex",
-			flexDirection: "column",
-			gap: "0.5rem"
-		},
-		label: {
-			fontSize: "0.875rem",
-			color: "#666",
-			fontWeight: "500"
-		},
-		input: {
-			padding: "0.75rem",
-			borderRadius: "4px",
-			border: "1px solid #ddd",
-			fontSize: "1rem",
-			outline: "none",
-			transition: "border-color 0.2s"
-		},
-		button: {
-			marginTop: "0.5rem",
-			padding: "0.75rem",
-			backgroundColor: "#0070f3",
-			color: "white",
-			border: "none",
-			borderRadius: "4px",
-			fontSize: "1rem",
-			fontWeight: "500",
-			cursor: "pointer",
-			transition: "background-color 0.2s"
-		}
-	};
+export default function CredentialForm({
+	onSubmit
+}: {
+	onSubmit: (c: Credentials) => void;
+}) {
+	const [form, setForm] = useState<Credentials>({ user: "", token: "" });
+	const valid = form.user.trim() && form.token.trim();
+	const [showToken, setShowToken] = useState<boolean>(false);
 
 	return (
-		<div style={styles.container}>
-			<h2 style={styles.header}>Audience Atlas</h2>
-			<form style={styles.form} onSubmit={handleSubmit}>
-				<div style={styles.inputGroup}>
-					<label style={styles.label} htmlFor='user'>
-						Github User
-					</label>
-					<input
-						style={styles.input}
-						type='text'
-						id='user'
-						name='user'
-						placeholder='Enter user'
-						value={formData.user}
-						onChange={handleChange}
-						required
-					/>
+		<div className='min-h-svh flex flex-col items-center justify-center atlas-grid-bg  gap-4'>
+			<div className='flex flex-col gap-5 justify-center mb-6 text-center'>
+				<div className='text-5xl'>🌍</div>
+				<div>
+					<h1 className='text-3xl font-extrabold atlas-brand-text'>
+						AUDIENCE ATLAS
+					</h1>
+					<p className='text-xs'>followers · following · ghost zone</p>
 				</div>
+			</div>
+			<Card className='w-full max-w-md border-border shadow-lg font-light p-4'>
+				<CardContent className='pt-4 pb-0 flex flex-col gap-5'>
+					<div className='flex flex-col gap-2'>
+						<Label htmlFor='user' className='text-xs font-light'>
+							GitHub Username
+						</Label>
+						<div className='relative'>
+							<UserIcon />
+							<Input
+								id='user'
+								type='text'
+								placeholder='e.g. torvalds'
+								value={form.user}
+								onChange={(e) => setForm((f) => ({ ...f, user: e.target.value }))}
+								autoComplete='off'
+								spellCheck={false}
+							/>
+						</div>
+					</div>
 
-				<div style={styles.inputGroup}>
-					<label style={styles.label} htmlFor='token'>
-						Token
-					</label>
-					<input
-						style={styles.input}
-						id='token'
-						name='token'
-						placeholder='Enter secure token'
-						value={formData.token}
-						onChange={handleChange}
-					/>
-				</div>
+					<div className='flex flex-col gap-2'>
+						<div className='flex justify-between'>
+							<Label htmlFor='token' className='text-xs font-light'>
+								Personal Access Token
+							</Label>
+							<Label className='text-xs font-medium text-muted-foreground'>
+								5.000 req/h
+							</Label>
+						</div>
 
-				<button
-					style={styles.button}
-					type='submit'
-					onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#005bc1")}
-					onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#0070f3")}>
-					Authorize
-				</button>
-			</form>
+						<div className='relative text-muted-foreground'>
+							<button
+								onClick={() => {
+									setShowToken((show) => !show);
+								}}
+								className='absolute left-3 top-1/2 translate-x- -translate-y-1/2 w-4 h-4 hover:bg-none flex items-center'>
+								{showToken ? "👁" : "🙈"}
+							</button>
+							<Input
+								id='token'
+								type={showToken ? "text" : "password"}
+								placeholder={"ghp_xxxxxxxxxxxx"}
+								value={form.token}
+								onChange={(e) => setForm((f) => ({ ...f, token: e.target.value }))}
+								autoComplete='off'
+								spellCheck={false}
+							/>
+						</div>
+					</div>
+
+					<Button
+						className='w-full mt-1 bg-blue-800 hover:bg-primary/90 text-slate-100 font-medium p-5'
+						disabled={!valid}
+						onClick={() => valid && onSubmit(form)}>
+						Generate Atlas →
+					</Button>
+
+					<p className='text-center text-xs text-foreground leading-relaxed border-t border-border pt-4'>
+						Token requires{" "}
+						<code className='bg-background text-indigo-500 px-1 py-0.5 rounded text-[11px]'>
+							read:user
+						</code>{" "}
+						and{" "}
+						<code className='bg-background text-purple-500 px-1 py-0.5 rounded text-[11px]'>
+							read:followers
+						</code>{" "}
+						scopes.
+						<div>
+							<a
+								href='https://github.com/settings/tokens'
+								className='text-primary hover:underline mt-2'
+								target='_blank'
+								rel='noopener noreferrer'>
+								Generate one →
+							</a>
+						</div>
+						<p className='mt-2'>
+							✓ Add{" "}
+							<code className='bg-background text-blue-400 px-1 py-0.5 rounded text-[11px] mt-2'>
+								user:follow
+							</code>{" "}
+							scope to unlock{" "}
+							<code className='bg-background text-green-400 px-1 py-0.5 rounded text-[11px]'>
+								Unfollow buttons
+							</code>{" "}
+							scopes.
+						</p>
+					</p>
+				</CardContent>
+			</Card>
 		</div>
 	);
-};
+}
 
-export default CredentialForm;
+const UserIcon = () => (
+	<svg
+		className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none'
+		viewBox='0 0 24 24'
+		fill='none'
+		stroke='currentColor'
+		strokeWidth='2'
+		strokeLinecap='round'
+		strokeLinejoin='round'>
+		<path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2' />
+		<circle cx='12' cy='7' r='4' />
+	</svg>
+);
