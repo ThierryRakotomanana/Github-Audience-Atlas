@@ -41,6 +41,7 @@ export default function CredentialForm({
 								onChange={(e) => setForm((f) => ({ ...f, user: e.target.value }))}
 								autoComplete='off'
 								spellCheck={false}
+								className='pl-8'
 							/>
 						</div>
 					</div>
@@ -71,6 +72,7 @@ export default function CredentialForm({
 								onChange={(e) => setForm((f) => ({ ...f, token: e.target.value }))}
 								autoComplete='off'
 								spellCheck={false}
+								className='pl-8'
 							/>
 						</div>
 					</div>
@@ -82,7 +84,7 @@ export default function CredentialForm({
 						Generate Atlas →
 					</Button>
 
-					<p className='text-center text-xs text-foreground leading-relaxed border-t border-border pt-4'>
+					<div className='text-center text-xs text-foreground leading-relaxed border-t border-border pt-4'>
 						Token requires{" "}
 						<code className='bg-background text-indigo-500 px-1 py-0.5 rounded text-[11px]'>
 							read:user
@@ -112,7 +114,7 @@ export default function CredentialForm({
 							</code>{" "}
 							scopes.
 						</p>
-					</p>
+					</div>
 				</CardContent>
 			</Card>
 		</div>
