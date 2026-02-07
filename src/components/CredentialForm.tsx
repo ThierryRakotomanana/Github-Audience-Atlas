@@ -26,96 +26,103 @@ export default function CredentialForm({
 				</div>
 			</div>
 			<Card className='w-full max-w-md border-border shadow-lg font-light p-4'>
-				<CardContent className='pt-4 pb-0 flex flex-col gap-5'>
-					<div className='flex flex-col gap-2'>
-						<Label htmlFor='user' className='text-xs font-light'>
-							GitHub Username
-						</Label>
-						<div className='relative'>
-							<UserIcon />
-							<Input
-								id='user'
-								type='text'
-								placeholder='e.g. torvalds'
-								value={form.user}
-								onChange={(e) => setForm((f) => ({ ...f, user: e.target.value }))}
-								autoComplete='off'
-								spellCheck={false}
-								className='pl-8'
-							/>
-						</div>
-					</div>
-
-					<div className='flex flex-col gap-2'>
-						<div className='flex justify-between'>
-							<Label htmlFor='token' className='text-xs font-light'>
-								Personal Access Token
+				<form
+					action={() => {
+						if (valid) onSubmit(form);
+					}}>
+					<CardContent className='pt-4 pb-0 flex flex-col gap-5'>
+						<div className='flex flex-col gap-2'>
+							<Label htmlFor='user' className='text-xs font-light'>
+								GitHub Username
 							</Label>
-							<Label className='text-xs font-medium text-muted-foreground'>
-								5.000 req/h
-							</Label>
+							<div className='relative'>
+								<UserIcon />
+								<Input
+									id='user'
+									type='text'
+									placeholder='e.g. torvalds'
+									value={form.user}
+									onChange={(e) => setForm((f) => ({ ...f, user: e.target.value }))}
+									autoComplete='off'
+									spellCheck={false}
+									className='pl-8'
+								/>
+							</div>
 						</div>
 
-						<div className='relative text-muted-foreground'>
-							<button
-								onClick={() => {
-									setShowToken((show) => !show);
-								}}
-								className='absolute left-3 top-1/2 translate-x- -translate-y-1/2 w-4 h-4 hover:bg-none flex items-center'>
-								{showToken ? "👁" : "🙈"}
-							</button>
-							<Input
-								id='token'
-								type={showToken ? "text" : "password"}
-								placeholder={"ghp_xxxxxxxxxxxx"}
-								value={form.token}
-								onChange={(e) => setForm((f) => ({ ...f, token: e.target.value }))}
-								autoComplete='off'
-								spellCheck={false}
-								className='pl-8'
-							/>
-						</div>
-					</div>
+						<div className='flex flex-col gap-2'>
+							<div className='flex justify-between'>
+								<Label htmlFor='token' className='text-xs font-light'>
+									Personal Access Token
+								</Label>
+								<Label className='text-xs font-medium text-muted-foreground'>
+									5.000 req/h
+								</Label>
+							</div>
 
-					<Button
-						className='w-full mt-1 bg-blue-800 hover:bg-primary/90 text-slate-100 font-medium p-5'
-						disabled={!valid}
-						onClick={() => valid && onSubmit(form)}>
-						Generate Atlas →
-					</Button>
-
-					<div className='text-center text-xs text-foreground leading-relaxed border-t border-border pt-4'>
-						Token requires{" "}
-						<code className='bg-background text-indigo-500 px-1 py-0.5 rounded text-[11px]'>
-							read:user
-						</code>{" "}
-						and{" "}
-						<code className='bg-background text-purple-500 px-1 py-0.5 rounded text-[11px]'>
-							read:followers
-						</code>{" "}
-						scopes.
-						<div>
-							<a
-								href='https://github.com/settings/tokens'
-								className='text-primary hover:underline mt-2'
-								target='_blank'
-								rel='noopener noreferrer'>
-								Generate one →
-							</a>
+							<div className='relative text-muted-foreground'>
+								<button
+									onClick={() => {
+										setShowToken((show) => !show);
+									}}
+									className='absolute left-3 top-1/2 translate-x- -translate-y-1/2 w-4 h-4 hover:bg-none flex items-center'>
+									{showToken ? "👁" : "🙈"}
+								</button>
+								<Input
+									id='token'
+									type={showToken ? "text" : "password"}
+									placeholder={"ghp_xxxxxxxxxxxx"}
+									value={form.token}
+									onChange={(e) =>
+										setForm((f) => ({ ...f, token: e.target.value }))
+									}
+									autoComplete='off'
+									spellCheck={false}
+									className='pl-8'
+								/>
+							</div>
 						</div>
-						<p className='mt-2'>
-							✓ Add{" "}
-							<code className='bg-background text-blue-400 px-1 py-0.5 rounded text-[11px] mt-2'>
-								user:follow
+
+						<Button
+							className='w-full mt-1 bg-blue-800 hover:bg-primary/90 text-slate-100 font-medium p-5'
+							disabled={!valid}
+							type='submit'>
+							Generate Atlas →
+						</Button>
+
+						<div className='text-center text-xs text-foreground leading-relaxed border-t border-border pt-4'>
+							Token requires{" "}
+							<code className='bg-background text-indigo-500 px-1 py-0.5 rounded text-[11px]'>
+								read:user
 							</code>{" "}
-							scope to unlock{" "}
-							<code className='bg-background text-green-400 px-1 py-0.5 rounded text-[11px]'>
-								Unfollow buttons
+							and{" "}
+							<code className='bg-background text-purple-500 px-1 py-0.5 rounded text-[11px]'>
+								read:followers
 							</code>{" "}
 							scopes.
-						</p>
-					</div>
-				</CardContent>
+							<div>
+								<a
+									href='https://github.com/settings/tokens'
+									className='text-primary hover:underline mt-2'
+									target='_blank'
+									rel='noopener noreferrer'>
+									Generate one →
+								</a>
+							</div>
+							<p className='mt-2'>
+								✓ Add{" "}
+								<code className='bg-background text-blue-400 px-1 py-0.5 rounded text-[11px] mt-2'>
+									user:follow
+								</code>{" "}
+								scope to unlock{" "}
+								<code className='bg-background text-green-400 px-1 py-0.5 rounded text-[11px]'>
+									Unfollow buttons
+								</code>{" "}
+								scopes.
+							</p>
+						</div>
+					</CardContent>
+				</form>
 			</Card>
 		</div>
 	);
