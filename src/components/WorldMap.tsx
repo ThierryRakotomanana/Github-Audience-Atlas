@@ -65,6 +65,9 @@ export const WorldMap = ({ width = 800, height = 450 }: WorldMapProps) => {
 	return (
 		<svg width={1000} height={550} className='bg-[#f0fdfa]'>
 			<g>
+				<path d={pathGenerator({ type: "Sphere" })!} fill='#6488bc'></path>
+			</g>
+			<g>
 				<path
 					d={pathGenerator(geoGraticule()())!}
 					fill='none'
