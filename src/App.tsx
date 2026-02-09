@@ -1,13 +1,13 @@
 import { useState } from "react";
 
 import CredentialForm from "./components/CredentialForm";
-import { GithubExplorer } from "./components/GithubExplorer";
 import { useAudience } from "./hooks/useAudience";
 import type { Credentials } from "./types/api.types";
 
 import { LoadingView } from "./components/LoadingView";
 import { Stat } from "@/components/Stat";
 import { ErrorView } from "@/components/ErrorView";
+import { WorldMap } from "@/components/WorldMap";
 
 function App() {
 	const [credentials, setCredentials] = useState<Credentials>({
@@ -64,13 +64,7 @@ function App() {
 					onRetry={() => setCredentials({ user: "", token: "" })}
 				/>
 			)}
-			{status === "success" && audience && (
-				<GithubExplorer
-					followers={audience.followers}
-					following={audience.following}
-					ghosts={audience.ghosts}
-				/>
-			)}
+			{status === "success" && audience && <WorldMap width={800} height={450} />}
 		</div>
 	);
 }
