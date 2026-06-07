@@ -37,3 +37,19 @@ jobs:
           commit: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="v$(node -p "require('./package.json').version")"
+
+          NOTES=$(awk '/^## /{count++; if(count==2) exit} count==1{print}' CHANGELOG.md | tail -n +2)
+
+          git tag "$VERSION" || true
+          git push origin "$VERSION" || true
+
+          gh release create "$VERSION" \
+            --title "$VERSION" \
+            --notes "$NOTES"
