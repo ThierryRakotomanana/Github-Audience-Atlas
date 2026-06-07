@@ -1,6 +1,9 @@
 {
 	"$schema": "https://unpkg.com/@changesets/config@3.1.4/schema.json",
-	"changelog": ["./changelog.mjs", { "repo": "ThierryRakotomanana/Unfollow" }],
+	"changelog": [
+		"./changelog.mjs",
+		{ "repo": "ThierryRakotomanana/Github-Audience-Atlas" }
+	],
 	"commit": false,
 	"fixed": [],
 	"linked": [],
