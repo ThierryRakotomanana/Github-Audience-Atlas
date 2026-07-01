@@ -64,7 +64,14 @@ function App() {
 					onRetry={() => setCredentials({ user: "", token: "" })}
 				/>
 			)}
-			{status === "success" && audience && <WorldMap width={800} height={450} />}
+			{status === "success" && audience && (
+				<div className='flex flex-1 items-stretch'>
+					<main className='flex-1 p-6 overflow-y-auto'>
+						<WorldMap width={900} height={500} />
+					</main>
+					<aside className='w-64 shrink-0 border-l border-border bg-card p-6 hidden md:block'></aside>
+				</div>
+			)}
 		</div>
 	);
 }
