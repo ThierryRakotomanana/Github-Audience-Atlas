@@ -31,7 +31,9 @@ export const WorldMap = ({ width, height }: WorldMapProps) => {
 			.catch((err) => console.error("Error loading map data:", err));
 	}, []);
 
-	const projection = d3.geoNaturalEarth1().fitSize([1000, 550], { type: "Sphere" });
+	const projection = d3
+		.geoNaturalEarth1()
+		.fitSize([width, height], { type: "Sphere" });
 
 	const pathGenerator = d3.geoPath().projection(projection);
 
@@ -45,7 +47,7 @@ export const WorldMap = ({ width, height }: WorldMapProps) => {
 				svgPath: pathGenerator(feature) || ""
 			};
 		});
-	}, [geoJson, width, height, pathGenerator]);
+	}, [geoJson, pathGenerator]);
 
 	if (!geoJson) {
 		return (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import CredentialForm from "./components/CredentialForm";
 import { useAudience } from "./hooks/useAudience";
@@ -10,10 +10,23 @@ import { ErrorView } from "@/components/ErrorView";
 import { WorldMap } from "@/components/WorldMap";
 
 function App() {
+	const ref = useRef<HTMLElement>(null);
+	const [size, setSize] = useState<{ width: number; height: number }>({
+		width: 0,
+		height: 0
+	});
 	const [credentials, setCredentials] = useState<Credentials>({
 		user: "",
 		token: ""
 	});
+
+	useEffect(() => {
+		if (!ref.current) return;
+		const width = ref.current.getBoundingClientRect().width,
+			height = ref.current.getBoundingClientRect().height;
+		console.log(width, height);
+		setSize({ width, height });
+	}, []);
 
 	const { status, steps, error, pct, estimate, user, audience, resetAt } =
 		useAudience(credentials);
@@ -66,8 +79,8 @@ function App() {
 			)}
 			{status === "success" && audience && (
 				<div className='flex flex-1 items-stretch'>
-					<main className='flex-1 p-6 overflow-y-auto'>
-						<WorldMap width={900} height={500} />
+					<main className='flex-1 overflow-y-auto' ref={ref}>
+						<WorldMap width={size.width} height={size.height} />
 					</main>
 					<aside className='w-64 shrink-0 border-l border-border bg-card p-6 hidden md:block'></aside>
 				</div>
