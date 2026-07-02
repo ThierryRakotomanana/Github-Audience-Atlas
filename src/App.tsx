@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 
 import CredentialForm from "./components/CredentialForm";
 import { useAudience } from "./hooks/useAudience";
@@ -10,22 +10,22 @@ import { ErrorView } from "@/components/ErrorView";
 import { WorldMap } from "@/components/WorldMap";
 
 function App() {
-	const ref = useRef<HTMLElement>(null);
-	const [size, setSize] = useState<{ width: number; height: number }>({
-		width: 0,
-		height: 0
-	});
+	const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+
 	const [credentials, setCredentials] = useState<Credentials>({
 		user: "",
 		token: ""
 	});
 
-	useEffect(() => {
-		if (!ref.current) return;
-		const width = ref.current.getBoundingClientRect().width,
-			height = ref.current.getBoundingClientRect().height;
-		console.log(width, height);
-		setSize({ width, height });
+	const measureRef = useCallback((node: HTMLElement | null) => {
+		if (node !== null) {
+			const rect = node.getBoundingClientRect();
+			console.log(rect.width, rect.height);
+			setSize({
+				width: rect.width,
+				height: rect.height
+			});
+		}
 	}, []);
 
 	const { status, steps, error, pct, estimate, user, audience, resetAt } =
@@ -36,7 +36,7 @@ function App() {
 	if (!isAuthorized) return <CredentialForm onSubmit={setCredentials} />;
 
 	return (
-		<div className='min-h-svh bg-background flex flex-col'>
+		<div className='min-h-screen bg-background flex flex-col'>
 			{user && (
 				<header className='border-b border-border bg-card'>
 					<div className='max-w-6xl mx-auto px-6 py-3 flex items-center gap-4'>
@@ -79,8 +79,11 @@ function App() {
 			)}
 			{status === "success" && audience && (
 				<div className='flex flex-1 items-stretch'>
-					<main className='flex-1 overflow-y-auto' ref={ref}>
-						<WorldMap width={size.width} height={size.height} />
+					<main className='flex-1 overflow-y-auto' ref={measureRef}>
+						<WorldMap
+							width={size?.width as number}
+							height={size?.height as number}
+						/>
 					</main>
 					<aside className='w-64 shrink-0 border-l border-border bg-card p-6 hidden md:block'></aside>
 				</div>
