@@ -2,7 +2,6 @@ import * as d3 from "d3";
 import type { FeatureCollection, Geometry } from "geojson";
 import * as topojson from "topojson-client";
 import { useEffect, useMemo, useState } from "react";
-import { geoGraticule } from "d3";
 
 export interface CountryProperties {
 	name: string;
@@ -16,6 +15,7 @@ export interface WorldMapProps {
 }
 
 export const WorldMap = ({ width, height }: WorldMapProps) => {
+	console.log(width, height);
 	const [geoJson, setGeoJson] = useState<WorldGeoJson | null>(null);
 
 	useEffect(() => {
@@ -31,11 +31,18 @@ export const WorldMap = ({ width, height }: WorldMapProps) => {
 			.catch((err) => console.error("Error loading map data:", err));
 	}, []);
 
-	const projection = d3
-		.geoNaturalEarth1()
-		.fitSize([width, height], { type: "Sphere" });
+	const projection = useMemo(() => {
+		return d3.geoNaturalEarth1().fitSize([width, height], { type: "Sphere" });
+	}, [width, height]);
 
-	const pathGenerator = d3.geoPath().projection(projection);
+	const pathGenerator = useMemo(() => {
+		return d3.geoPath().projection(projection);
+	}, [projection]);
+
+	const graticulePath = useMemo(() => {
+		const graticule = d3.geoGraticule();
+		return pathGenerator(graticule()) || "";
+	}, [pathGenerator]);
 
 	const mapPaths = useMemo(() => {
 		if (!geoJson) return [];
@@ -67,11 +74,11 @@ export const WorldMap = ({ width, height }: WorldMapProps) => {
 	return (
 		<svg width={width} height={height} className='bg-[#f0fdfa]'>
 			<g>
-				<path d={pathGenerator({ type: "Sphere" })!} fill='#6488bc'></path>
+				<path d={pathGenerator({ type: "Sphere" }) as string} fill='#6488bc'></path>
 			</g>
 			<g>
 				<path
-					d={pathGenerator(geoGraticule()())!}
+					d={graticulePath}
 					fill='none'
 					stroke='#bcc3d1'
 					strokeWidth={0.5}></path>
