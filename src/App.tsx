@@ -102,6 +102,17 @@ function App() {
 					<aside className='w-64 shrink-0 border-l border-border bg-card p-6 hidden md:block'></aside>
 				</div>
 			)}
+			<footer className='h-8 w-full border-t border-border bg-muted/40 px-6 flex items-center justify-between text-xs text-muted-foreground'>
+				<p>© 2026 Your Company</p>
+				<div className='flex gap-4'>
+					<a href='#' className='hover:underline'>
+						Privacy
+					</a>
+					<a href='#' className='hover:underline'>
+						Terms
+					</a>
+				</div>
+			</footer>
 		</div>
 	);
 }
