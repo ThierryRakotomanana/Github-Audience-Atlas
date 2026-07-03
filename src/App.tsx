@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import CredentialForm from "./components/CredentialForm";
 import { useAudience } from "./hooks/useAudience";
@@ -10,6 +10,7 @@ import { ErrorView } from "@/components/ErrorView";
 import { WorldMap } from "@/components/WorldMap";
 
 function App() {
+	const containerRef = useRef<HTMLDivElement>(null);
 	const [size, setSize] = useState<{ width: number; height: number } | null>(null);
 
 	const [credentials, setCredentials] = useState<Credentials>({
@@ -17,19 +18,26 @@ function App() {
 		token: ""
 	});
 
-	const measureRef = useCallback((node: HTMLElement | null) => {
-		if (node !== null) {
-			const rect = node.getBoundingClientRect();
-			console.log(rect.width, rect.height);
-			setSize({
-				width: rect.width,
-				height: rect.height
-			});
-		}
-	}, []);
-
 	const { status, steps, error, pct, estimate, user, audience, resetAt } =
 		useAudience(credentials);
+
+	useEffect(() => {
+		if (status !== "success" || !containerRef.current) return;
+
+		const container = containerRef.current;
+
+		const resizeObserver = new ResizeObserver((entries) => {
+			if (!entries || entries.length === 0) return;
+			const { width, height } = entries[0].contentRect;
+			setSize({ width, height });
+		});
+
+		resizeObserver.observe(container);
+
+		return () => {
+			resizeObserver.disconnect();
+		};
+	}, [status]);
 
 	const isAuthorized = Boolean(credentials.user && credentials.token);
 
@@ -39,7 +47,7 @@ function App() {
 		<div className='min-h-screen bg-background flex flex-col'>
 			{user && (
 				<header className='border-b border-border bg-card'>
-					<div className='max-w-6xl mx-auto px-6 py-3 flex items-center gap-4'>
+					<div className='max-w-6xl mx-auto px-6 py-1 flex items-center gap-4'>
 						<img
 							src={user.avatar_url}
 							alt={user.login}
@@ -50,7 +58,7 @@ function App() {
 								{user.name ?? user.login}
 							</p>
 							<p className='text-xs text-muted-foreground font-mono'>
-								<a href={user.html_url} className='' target='_blank'>
+								<a href={user.html_url} target='_blank' rel='noreferrer'>
 									@{user.login}
 								</a>
 							</p>
@@ -64,12 +72,15 @@ function App() {
 			)}
 
 			{status === "loading" && <LoadingView steps={steps} pct={pct} />}
+
 			{status === "quota_warning" && (
-				<div>
-					{" "}
-					{`remaining : ${estimate?.remaining} requests needed ${estimate?.requestsNeeded} it will exced ? : ${estimate?.willExceed} `}
+				<div className='p-6 text-sm border-b border-warning bg-warning/10 text-warning-foreground'>
+					Remaining: {estimate?.remaining} requests needed:{" "}
+					{estimate?.requestsNeeded}. Will exceed?{" "}
+					{estimate?.willExceed ? "Yes" : "No"}
 				</div>
 			)}
+
 			{status === "error" && error && (
 				<ErrorView
 					message={error}
@@ -77,13 +88,16 @@ function App() {
 					onRetry={() => setCredentials({ user: "", token: "" })}
 				/>
 			)}
+
 			{status === "success" && audience && (
-				<div className='flex flex-1 items-stretch'>
-					<main className='flex-1 overflow-y-auto' ref={measureRef}>
-						<WorldMap
-							width={size?.width as number}
-							height={size?.height as number}
-						/>
+				<div className='flex flex-1 items-stretch min-h-0'>
+					<main className='flex-1 overflow-hidden relative' ref={containerRef}>
+						{size ?
+							<WorldMap width={size.width} height={size.height} />
+						:	<div className='absolute inset-0 flex items-center justify-center text-sm text-muted-foreground'>
+								Calculating map dimensions...
+							</div>
+						}
 					</main>
 					<aside className='w-64 shrink-0 border-l border-border bg-card p-6 hidden md:block'></aside>
 				</div>
