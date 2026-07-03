@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import CredentialForm from "./components/CredentialForm";
 import { useAudience } from "./hooks/useAudience";
@@ -10,6 +10,9 @@ import { ErrorView } from "@/components/ErrorView";
 import { WorldMap } from "@/components/WorldMap";
 
 function App() {
+	const containerRef = useRef<HTMLDivElement>(null);
+	const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+
 	const [credentials, setCredentials] = useState<Credentials>({
 		user: "",
 		token: ""
@@ -18,15 +21,33 @@ function App() {
 	const { status, steps, error, pct, estimate, user, audience, resetAt } =
 		useAudience(credentials);
 
+	useEffect(() => {
+		if (status !== "success" || !containerRef.current) return;
+
+		const container = containerRef.current;
+
+		const resizeObserver = new ResizeObserver((entries) => {
+			if (!entries || entries.length === 0) return;
+			const { width, height } = entries[0].contentRect;
+			setSize({ width, height });
+		});
+
+		resizeObserver.observe(container);
+
+		return () => {
+			resizeObserver.disconnect();
+		};
+	}, [status]);
+
 	const isAuthorized = Boolean(credentials.user && credentials.token);
 
 	if (!isAuthorized) return <CredentialForm onSubmit={setCredentials} />;
 
 	return (
-		<div className='min-h-svh bg-background flex flex-col'>
+		<div className='min-h-screen bg-background flex flex-col'>
 			{user && (
 				<header className='border-b border-border bg-card'>
-					<div className='max-w-6xl mx-auto px-6 py-3 flex items-center gap-4'>
+					<div className='max-w-6xl mx-auto px-6 py-1 flex items-center gap-4'>
 						<img
 							src={user.avatar_url}
 							alt={user.login}
@@ -37,7 +58,7 @@ function App() {
 								{user.name ?? user.login}
 							</p>
 							<p className='text-xs text-muted-foreground font-mono'>
-								<a href={user.html_url} className='' target='_blank'>
+								<a href={user.html_url} target='_blank' rel='noreferrer'>
 									@{user.login}
 								</a>
 							</p>
@@ -51,12 +72,15 @@ function App() {
 			)}
 
 			{status === "loading" && <LoadingView steps={steps} pct={pct} />}
+
 			{status === "quota_warning" && (
-				<div>
-					{" "}
-					{`remaining : ${estimate?.remaining} requests needed ${estimate?.requestsNeeded} it will exced ? : ${estimate?.willExceed} `}
+				<div className='p-6 text-sm border-b border-warning bg-warning/10 text-warning-foreground'>
+					Remaining: {estimate?.remaining} requests needed:{" "}
+					{estimate?.requestsNeeded}. Will exceed?{" "}
+					{estimate?.willExceed ? "Yes" : "No"}
 				</div>
 			)}
+
 			{status === "error" && error && (
 				<ErrorView
 					message={error}
@@ -64,7 +88,31 @@ function App() {
 					onRetry={() => setCredentials({ user: "", token: "" })}
 				/>
 			)}
-			{status === "success" && audience && <WorldMap width={800} height={450} />}
+
+			{status === "success" && audience && (
+				<div className='flex flex-1 items-stretch min-h-0'>
+					<main className='flex-1 overflow-hidden relative' ref={containerRef}>
+						{size ?
+							<WorldMap width={size.width} height={size.height} />
+						:	<div className='absolute inset-0 flex items-center justify-center text-sm text-muted-foreground'>
+								Calculating map dimensions...
+							</div>
+						}
+					</main>
+					<aside className='w-64 shrink-0 border-l border-border bg-card p-6 hidden md:block'></aside>
+				</div>
+			)}
+			<footer className='h-8 w-full border-t border-border bg-muted/40 px-6 flex items-center justify-between text-xs text-muted-foreground'>
+				<p>© 2026 Your Company</p>
+				<div className='flex gap-4'>
+					<a href='#' className='hover:underline'>
+						Privacy
+					</a>
+					<a href='#' className='hover:underline'>
+						Terms
+					</a>
+				</div>
+			</footer>
 		</div>
 	);
 }
