@@ -88,20 +88,30 @@ export async function geocode(
 	for (let i = 0; i < total; i++) {
 		const profile = rawData[i];
 		const clean = cleanLoc(profile.location);
-		const country = guessCountry(clean);
+		if (clean.length === 0) {
+			invalidOrSkippedLocations.set(profile.login, "EMPTY");
 
-		if (!country && 0 < clean.length) {
-			console.log(profile.login, profile.location);
+			onProgress({ done: i + 1, total });
+			await delay(10);
+			continue;
+		}
+
+		const country = guessCountry(clean);
+		const locationKey = clean.join("|");
+
+		if (country === "SKIP") {
+			invalidOrSkippedLocations.set(locationKey, "SKIP");
+		} else if (country === null) {
 			missingDictionaryMatches.set(profile.login, profile.location);
-		} else if (country === "SKIP") {
-			invalidOrSkippedLocations.set(clean.join("|"), "SKIP");
-		} else if (!country && clean.length == 0) {
-			invalidOrSkippedLocations.set(clean.join("|"), "SKIP");
 		} else {
-			profileCountryMap.set(
-				profile.login,
-				`location: ${profile.location}, country : ${country}`
-			);
+			profileCountryMap.set(profile.login, country);
+
+			let regionalUsers = usersByCountry.get(country);
+			if (!regionalUsers) {
+				regionalUsers = [];
+				usersByCountry.set(country, regionalUsers);
+			}
+			regionalUsers.push(profile);
 		}
 
 		onProgress({ done: i + 1, total });
