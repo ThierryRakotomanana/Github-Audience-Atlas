@@ -10,6 +10,10 @@ export type GeocodeResult = {
 	skipped: Map<string, string>;
 };
 
+const LOWER_CDICT = new Map<string, string>(
+	Object.entries(CDICT).map(([city, country]) => [city.toLowerCase(), country])
+);
+
 const NOISE_WORDS =
 	/\b(remote|currently|based in|living in|from|near|@|formerly|ex-)\b/gi;
 const NON_LETTER = /[^a-zA-Z\p{L}\u{1F1E6}-\u{1F1FF}]/gu;
@@ -62,9 +66,8 @@ export const guessCountry = (locations: string[]) => {
 		const token = TOKEN.toLowerCase();
 		if (SKIP.has(token)) return "SKIP";
 
-		for (const [city, country] of Object.entries(CDICT)) {
-			if (token === city.toLowerCase()) return country;
-		}
+		const countryFromDict = LOWER_CDICT.get(token);
+		if (countryFromDict) return countryFromDict;
 	}
 
 	return null;
@@ -86,6 +89,7 @@ export async function geocode(
 		const country = guessCountry(clean);
 
 		if (!country && 0 < clean.length) {
+			console.log(profile.login, profile.location);
 			needLoc.set(profile.login, profile.location);
 		} else if (country === "SKIP") {
 			skipped.set(clean.join("|"), "SKIP");
