@@ -5,9 +5,10 @@ import { SKIP } from "../constants/unlocated";
 import type { GithubProfile } from "../types/api.types";
 
 export type GeocodeResult = {
-	pcMap: Map<string, string>;
-	needLoc: Map<string, string | null>;
-	skipped: Map<string, string>;
+	usersByCountry: Map<string, GithubProfile[]>;
+	profileCountryMap: Map<string, string>;
+	missingDictionaryMatches: Map<string, string | null>;
+	invalidOrSkippedLocations: Map<string, string>;
 };
 
 const LOWER_CDICT = new Map<string, string>(
@@ -77,9 +78,10 @@ export async function geocode(
 	rawData: GithubProfile[],
 	onProgress: ({ done, total }: { done: number; total: number }) => void
 ): Promise<GeocodeResult> {
-	const pcMap = new Map<string, string>();
-	const needLoc = new Map<string, string | null>();
-	const skipped = new Map<string, string>();
+	const profileCountryMap = new Map<string, string>();
+	const missingDictionaryMatches = new Map<string, string | null>();
+	const invalidOrSkippedLocations = new Map<string, string>();
+	const usersByCountry = new Map<string, GithubProfile[]>();
 
 	const total = rawData.length;
 
@@ -90,13 +92,13 @@ export async function geocode(
 
 		if (!country && 0 < clean.length) {
 			console.log(profile.login, profile.location);
-			needLoc.set(profile.login, profile.location);
+			missingDictionaryMatches.set(profile.login, profile.location);
 		} else if (country === "SKIP") {
-			skipped.set(clean.join("|"), "SKIP");
+			invalidOrSkippedLocations.set(clean.join("|"), "SKIP");
 		} else if (!country && clean.length == 0) {
-			skipped.set(clean.join("|"), "SKIP");
+			invalidOrSkippedLocations.set(clean.join("|"), "SKIP");
 		} else {
-			pcMap.set(
+			profileCountryMap.set(
 				profile.login,
 				`location: ${profile.location}, country : ${country}`
 			);
@@ -106,5 +108,10 @@ export async function geocode(
 		await delay(10);
 	}
 
-	return { pcMap, needLoc, skipped };
+	return {
+		usersByCountry,
+		profileCountryMap,
+		missingDictionaryMatches,
+		invalidOrSkippedLocations
+	};
 }
