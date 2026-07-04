@@ -8,6 +8,7 @@ import { LoadingView } from "./components/LoadingView";
 import { Stat } from "@/components/Stat";
 import { ErrorView } from "@/components/ErrorView";
 import { WorldMap } from "@/components/WorldMap";
+import { CountryList } from "@/components/CountryList";
 
 function App() {
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -38,6 +39,16 @@ function App() {
 			resizeObserver.disconnect();
 		};
 	}, [status]);
+
+	const topCountries = [
+		{ code: "US", name: "United States", value: "42%" },
+		{ code: "GB", name: "United Kingdom", value: "18%" },
+		{ code: "DE", name: "Germany", value: "12%" },
+		{ code: "FR", name: "France", value: "9%" },
+		{ code: "CA", name: "Canada", value: "7%" },
+		{ code: "JP", name: "Japan", value: "5%" },
+		{ code: "AU", name: "Australia", value: "4%" }
+	];
 
 	const isAuthorized = Boolean(credentials.user && credentials.token);
 
@@ -99,7 +110,9 @@ function App() {
 							</div>
 						}
 					</main>
-					<aside className='w-64 shrink-0 border-l border-border bg-card p-6 hidden md:block'></aside>
+					<aside className='w-64 shrink-0 border-l border-border bg-card p-6 hidden md:block'>
+						<CountryList data={topCountries} />
+					</aside>
 				</div>
 			)}
 			<footer className='h-8 w-full border-t border-border bg-muted/40 px-6 flex items-center justify-between text-xs text-muted-foreground'>
