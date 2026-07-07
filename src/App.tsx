@@ -8,10 +8,12 @@ import { LoadingView } from "./components/LoadingView";
 import { Stat } from "@/components/Stat";
 import { ErrorView } from "@/components/ErrorView";
 import { WorldMap } from "@/components/WorldMap";
+import { CountryList } from "@/components/CountryList";
 
 function App() {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+	const [country, setCountry] = useState<string | null>(null);
 
 	const [credentials, setCredentials] = useState<Credentials>({
 		user: "",
@@ -44,7 +46,7 @@ function App() {
 	if (!isAuthorized) return <CredentialForm onSubmit={setCredentials} />;
 
 	return (
-		<div className='min-h-screen bg-background flex flex-col'>
+		<div className='h-screen w-screen overflow-hidden bg-background flex flex-col'>
 			{user && (
 				<header className='border-b border-border bg-card'>
 					<div className='max-w-6xl mx-auto px-6 py-1 flex items-center gap-4'>
@@ -90,19 +92,25 @@ function App() {
 			)}
 
 			{status === "success" && audience && (
-				<div className='flex flex-1 items-stretch min-h-0'>
+				<div className='flex flex-1 items-stretch min-h-0 h-0 w-full overflow-hidden'>
 					<main className='flex-1 overflow-hidden relative' ref={containerRef}>
 						{size ?
-							<WorldMap width={size.width} height={size.height} />
+							<WorldMap
+								width={size.width}
+								height={size.height}
+								setCountry={setCountry}
+							/>
 						:	<div className='absolute inset-0 flex items-center justify-center text-sm text-muted-foreground'>
 								Calculating map dimensions...
 							</div>
 						}
 					</main>
-					<aside className='w-64 shrink-0 border-l border-border bg-card p-6 hidden md:block'></aside>
+					<aside className='w-64 shrink-0 border-l border-border bg-card p-6 hidden md:block'>
+						<CountryList data={audience} country={country} />
+					</aside>
 				</div>
 			)}
-			<footer className='h-8 w-full border-t border-border bg-muted/40 px-6 flex items-center justify-between text-xs text-muted-foreground'>
+			<footer className='h-8 w-full border-t border-border bg-muted/40 px-6 flex items-center justify-between text-xs text-muted-foreground shrink-0'>
 				<p>© 2026 Your Company</p>
 				<div className='flex gap-4'>
 					<a href='#' className='hover:underline'>

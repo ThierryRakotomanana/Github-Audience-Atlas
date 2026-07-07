@@ -5,10 +5,15 @@ import { SKIP } from "../constants/unlocated";
 import type { GithubProfile } from "../types/api.types";
 
 export type GeocodeResult = {
-	pcMap: Map<string, string>;
-	needLoc: Map<string, string | null>;
-	skipped: Map<string, string>;
+	usersByCountry: Map<string, GithubProfile[]>;
+	profileCountryMap: Map<string, string>;
+	missingDictionaryMatches: Map<string, string | null>;
+	invalidOrSkippedLocations: Map<string, string>;
 };
+
+const LOWER_CDICT = new Map<string, string>(
+	Object.entries(CDICT).map(([city, country]) => [city.toLowerCase(), country])
+);
 
 const NOISE_WORDS =
 	/\b(remote|currently|based in|living in|from|near|@|formerly|ex-)\b/gi;
@@ -62,9 +67,8 @@ export const guessCountry = (locations: string[]) => {
 		const token = TOKEN.toLowerCase();
 		if (SKIP.has(token)) return "SKIP";
 
-		for (const [city, country] of Object.entries(CDICT)) {
-			if (token === city.toLowerCase()) return country;
-		}
+		const countryFromDict = LOWER_CDICT.get(token);
+		if (countryFromDict) return countryFromDict;
 	}
 
 	return null;
@@ -74,33 +78,50 @@ export async function geocode(
 	rawData: GithubProfile[],
 	onProgress: ({ done, total }: { done: number; total: number }) => void
 ): Promise<GeocodeResult> {
-	const pcMap = new Map<string, string>();
-	const needLoc = new Map<string, string | null>();
-	const skipped = new Map<string, string>();
+	const profileCountryMap = new Map<string, string>();
+	const missingDictionaryMatches = new Map<string, string | null>();
+	const invalidOrSkippedLocations = new Map<string, string>();
+	const usersByCountry = new Map<string, GithubProfile[]>();
 
 	const total = rawData.length;
 
 	for (let i = 0; i < total; i++) {
 		const profile = rawData[i];
 		const clean = cleanLoc(profile.location);
-		const country = guessCountry(clean);
+		if (clean.length === 0) {
+			invalidOrSkippedLocations.set(profile.login, "EMPTY");
 
-		if (!country && 0 < clean.length) {
-			needLoc.set(profile.login, profile.location);
-		} else if (country === "SKIP") {
-			skipped.set(clean.join("|"), "SKIP");
-		} else if (!country && clean.length == 0) {
-			skipped.set(clean.join("|"), "SKIP");
+			onProgress({ done: i + 1, total });
+			await delay(10);
+			continue;
+		}
+
+		const country = guessCountry(clean);
+		const locationKey = clean.join("|");
+
+		if (country === "SKIP") {
+			invalidOrSkippedLocations.set(locationKey, "SKIP");
+		} else if (country === null) {
+			missingDictionaryMatches.set(profile.login, profile.location);
 		} else {
-			pcMap.set(
-				profile.login,
-				`location: ${profile.location}, country : ${country}`
-			);
+			profileCountryMap.set(profile.login, country);
+
+			let regionalUsers = usersByCountry.get(country);
+			if (!regionalUsers) {
+				regionalUsers = [];
+				usersByCountry.set(country, regionalUsers);
+			}
+			regionalUsers.push(profile);
 		}
 
 		onProgress({ done: i + 1, total });
 		await delay(10);
 	}
 
-	return { pcMap, needLoc, skipped };
+	return {
+		usersByCountry,
+		profileCountryMap,
+		missingDictionaryMatches,
+		invalidOrSkippedLocations
+	};
 }

@@ -45,10 +45,12 @@ export type AudienceType = "followers" | "following" | "ghosts";
 
 export type Credentials = { user: string; token: string };
 
+export type LocalizedGithubProfile = GithubProfile & { country: string };
+
 export type AudienceData = {
-	followers: GithubProfile[];
-	following: GithubProfile[];
-	ghosts: GithubProfile[];
+	followers: LocalizedGithubProfile[];
+	following: LocalizedGithubProfile[];
+	ghosts: LocalizedGithubProfile[];
 };
 
 export type StepId = "fetch" | "profiles" | "geocode" | "done";
