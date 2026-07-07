@@ -1,32 +1,39 @@
 import * as d3 from "d3";
-import type { FeatureCollection, Geometry } from "geojson";
-import * as topojson from "topojson-client";
+import type { Geometry } from "geojson";
 import { useEffect, useMemo, useState } from "react";
 
-export interface CountryProperties {
-	name: string;
+interface GeoProperties {
+	NAME_EN: string;
+	ISO_A2_EH: string;
 }
 
-export type WorldGeoJson = FeatureCollection<Geometry, CountryProperties>;
+interface CountryFeature {
+	type: "Feature";
+	properties: GeoProperties;
+	geometry: Geometry;
+}
+
+interface WorldGeoJson {
+	type: "FeatureCollection";
+	features: CountryFeature[];
+}
 
 export interface WorldMapProps {
 	width: number;
 	height: number;
+	setCountry: (country: string) => void;
 }
 
-export const WorldMap = ({ width, height }: WorldMapProps) => {
-	console.log(width, height);
+export const WorldMap = ({ width, height, setCountry }: WorldMapProps) => {
 	const [geoJson, setGeoJson] = useState<WorldGeoJson | null>(null);
 
 	useEffect(() => {
-		fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
+		fetch(
+			"https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson"
+		)
 			.then((response) => response.json())
-			.then((data) => {
-				const convertedGeoJson = topojson.feature(
-					data,
-					data.objects.countries
-				) as unknown as WorldGeoJson;
-				setGeoJson(convertedGeoJson);
+			.then((data: WorldGeoJson) => {
+				setGeoJson(data);
 			})
 			.catch((err) => console.error("Error loading map data:", err));
 	}, []);
@@ -49,8 +56,8 @@ export const WorldMap = ({ width, height }: WorldMapProps) => {
 
 		return geoJson.features.map((feature) => {
 			return {
-				id: feature.id || feature.properties.name,
-				name: feature.properties.name,
+				id: feature.properties.ISO_A2_EH,
+				name: feature.properties.NAME_EN,
 				svgPath: pathGenerator(feature) || ""
 			};
 		});
@@ -86,7 +93,7 @@ export const WorldMap = ({ width, height }: WorldMapProps) => {
 			<g>
 				{mapPaths.map((country) => (
 					<path
-						key={country.id}
+						key={`${country.id}-${country.name}`}
 						d={country.svgPath}
 						fill='#2dd4bf'
 						stroke='#ffffff'
@@ -99,7 +106,7 @@ export const WorldMap = ({ width, height }: WorldMapProps) => {
 							(e.target as SVGPathElement).style.fill = "#2dd4bf";
 						}}
 						onClick={() => {
-							alert(`You clicked on: ${country.name}`);
+							setCountry(country.id);
 						}}
 					/>
 				))}
