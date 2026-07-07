@@ -45,7 +45,7 @@ function App() {
 	if (!isAuthorized) return <CredentialForm onSubmit={setCredentials} />;
 
 	return (
-		<div className='min-h-screen bg-background flex flex-col'>
+		<div className='h-screen w-screen overflow-hidden bg-background flex flex-col'>
 			{user && (
 				<header className='border-b border-border bg-card'>
 					<div className='max-w-6xl mx-auto px-6 py-1 flex items-center gap-4'>
@@ -91,7 +91,7 @@ function App() {
 			)}
 
 			{status === "success" && audience && (
-				<div className='flex flex-1 items-stretch min-h-0'>
+				<div className='flex flex-1 items-stretch min-h-0 h-0 w-full overflow-hidden'>
 					<main className='flex-1 overflow-hidden relative' ref={containerRef}>
 						{size ?
 							<WorldMap width={size.width} height={size.height} />
@@ -105,7 +105,7 @@ function App() {
 					</aside>
 				</div>
 			)}
-			<footer className='h-8 w-full border-t border-border bg-muted/40 px-6 flex items-center justify-between text-xs text-muted-foreground'>
+			<footer className='h-8 w-full border-t border-border bg-muted/40 px-6 flex items-center justify-between text-xs text-muted-foreground shrink-0'>
 				<p>© 2026 Your Company</p>
 				<div className='flex gap-4'>
 					<a href='#' className='hover:underline'>

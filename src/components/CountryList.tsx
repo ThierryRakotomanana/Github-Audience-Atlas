@@ -13,7 +13,6 @@ export function CountryList({
 }: CountryListProps) {
 	return (
 		<div className='flex h-full flex-col gap-4'>
-			{/* Sidebar Section Header */}
 			<div className='flex items-center justify-between'>
 				<h3 className='text-sm font-semibold tracking-tight text-foreground'>
 					{title}
@@ -23,7 +22,6 @@ export function CountryList({
 				</span>
 			</div>
 
-			{/* Scrollable Container */}
 			<div className='flex-1 overflow-y-auto pr-2 scrollbar-thin [scrollbar-color:var(--color-border)_transparent]'>
 				<div className='space-y-1'>
 					{data.followers.map((profile) => {
