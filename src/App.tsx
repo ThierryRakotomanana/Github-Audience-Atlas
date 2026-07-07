@@ -40,16 +40,6 @@ function App() {
 		};
 	}, [status]);
 
-	const topCountries = [
-		{ code: "US", name: "United States", value: "42%" },
-		{ code: "GB", name: "United Kingdom", value: "18%" },
-		{ code: "DE", name: "Germany", value: "12%" },
-		{ code: "FR", name: "France", value: "9%" },
-		{ code: "CA", name: "Canada", value: "7%" },
-		{ code: "JP", name: "Japan", value: "5%" },
-		{ code: "AU", name: "Australia", value: "4%" }
-	];
-
 	const isAuthorized = Boolean(credentials.user && credentials.token);
 
 	if (!isAuthorized) return <CredentialForm onSubmit={setCredentials} />;
