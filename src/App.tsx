@@ -13,6 +13,7 @@ import { CountryList } from "@/components/CountryList";
 function App() {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+	const [country, setCountry] = useState<string | null>(null);
 
 	const [credentials, setCredentials] = useState<Credentials>({
 		user: "",
@@ -94,14 +95,18 @@ function App() {
 				<div className='flex flex-1 items-stretch min-h-0 h-0 w-full overflow-hidden'>
 					<main className='flex-1 overflow-hidden relative' ref={containerRef}>
 						{size ?
-							<WorldMap width={size.width} height={size.height} />
+							<WorldMap
+								width={size.width}
+								height={size.height}
+								setCountry={setCountry}
+							/>
 						:	<div className='absolute inset-0 flex items-center justify-center text-sm text-muted-foreground'>
 								Calculating map dimensions...
 							</div>
 						}
 					</main>
 					<aside className='w-64 shrink-0 border-l border-border bg-card p-6 hidden md:block'>
-						<CountryList data={audience} />
+						<CountryList data={audience} country={country} />
 					</aside>
 				</div>
 			)}
