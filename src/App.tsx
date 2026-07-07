@@ -111,7 +111,7 @@ function App() {
 						}
 					</main>
 					<aside className='w-64 shrink-0 border-l border-border bg-card p-6 hidden md:block'>
-						<CountryList data={topCountries} />
+						<CountryList data={audience} />
 					</aside>
 				</div>
 			)}

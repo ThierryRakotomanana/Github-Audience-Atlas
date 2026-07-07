@@ -5,6 +5,7 @@ import type {
 	Credentials,
 	GithubProfile,
 	GithubUser,
+	LocalizedGithubProfile,
 	Step,
 	StepId
 } from "../types/api.types";
@@ -206,7 +207,7 @@ export function useAudience(credentials: Credentials): UseAudienceReturn {
 				updateStep("profiles", { status: "done" });
 
 				updateStep("geocode", { status: "active", detail: "computing…" });
-				const AssociatedProfileByCountry = await geocode(
+				const { profileCountryMap } = await geocode(
 					[...audienceProfiles.values()],
 					({ done, total }) => {
 						updateStep("geocode", { detail: `${done} / ${total}` });
@@ -217,11 +218,21 @@ export function useAudience(credentials: Credentials): UseAudienceReturn {
 					}
 				);
 				updateStep("geocode", { status: "done" });
-				console.log(AssociatedProfileByCountry);
-				const resolve = (rawAudiences: GithubUser[]): GithubProfile[] => {
+				const resolve = (rawAudiences: GithubUser[]): LocalizedGithubProfile[] => {
 					return rawAudiences.flatMap((rawAudience) => {
-						const profile = audienceProfiles.get(rawAudience.login);
-						return profile ? profile : [];
+						const audienceProfile = audienceProfiles.get(rawAudience.login);
+						const countryCode = profileCountryMap.get(rawAudience.login);
+
+						if (audienceProfile && countryCode) {
+							return [
+								{
+									...audienceProfile,
+									country: countryCode
+								} as LocalizedGithubProfile
+							];
+						}
+
+						return [];
 					});
 				};
 
