@@ -1,3 +1,4 @@
+import type { AudienceData, LocalizedGithubProfile } from "@/types/api.types";
 import * as d3 from "d3";
 import type { Geometry } from "geojson";
 import { useEffect, useMemo, useState } from "react";
@@ -22,9 +23,15 @@ export interface WorldMapProps {
 	width: number;
 	height: number;
 	setCountry: (country: string) => void;
+	audience: AudienceData;
 }
 
-export const WorldMap = ({ width, height, setCountry }: WorldMapProps) => {
+export const WorldMap = ({
+	width,
+	height,
+	setCountry,
+	audience
+}: WorldMapProps) => {
 	const [geoJson, setGeoJson] = useState<WorldGeoJson | null>(null);
 
 	useEffect(() => {
@@ -63,6 +70,13 @@ export const WorldMap = ({ width, height, setCountry }: WorldMapProps) => {
 		});
 	}, [geoJson, pathGenerator]);
 
+	const profilesByCountry = useMemo(() => {
+		return audience.followers.reduce((acc, profile) => {
+			const regionalProfiles = acc.get(profile.country) || [];
+			return acc.set(profile.country, regionalProfiles);
+		}, new Map<string, LocalizedGithubProfile[]>());
+	}, [audience.followers]);
+
 	if (!geoJson) {
 		return (
 			<div
@@ -95,7 +109,7 @@ export const WorldMap = ({ width, height, setCountry }: WorldMapProps) => {
 					<path
 						key={`${country.id}-${country.name}`}
 						d={country.svgPath}
-						fill='#2dd4bf'
+						fill={profilesByCountry.get(country.id) ? "#2dd4bf" : "#ffffff"}
 						stroke='#ffffff'
 						strokeWidth={0.5}
 						style={{ transition: "all 0.2s ease" }}

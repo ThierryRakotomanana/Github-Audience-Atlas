@@ -99,6 +99,7 @@ function App() {
 								width={size.width}
 								height={size.height}
 								setCountry={setCountry}
+								audience={audience}
 							/>
 						:	<div className='absolute inset-0 flex items-center justify-center text-sm text-muted-foreground'>
 								Calculating map dimensions...
