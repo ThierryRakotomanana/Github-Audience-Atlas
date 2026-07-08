@@ -1,3 +1,4 @@
+import { getCountryColor, MAP_BASE_STYLING } from "@/lib/getCountryColor";
 import type { AudienceData, LocalizedGithubProfile } from "@/types/api.types";
 import * as d3 from "d3";
 import type { Geometry } from "geojson";
@@ -93,31 +94,35 @@ export const WorldMap = ({
 	}
 
 	return (
-		<svg width={width} height={height} className='bg-[#f0fdfa]'>
+		<svg width={width} height={height} className='bg-[#030508]'>
 			<g>
-				<path d={pathGenerator({ type: "Sphere" }) as string} fill='#6488bc'></path>
+				<path d={pathGenerator({ type: "Sphere" }) as string} fill='#0B0F19'></path>
 			</g>
 			<g>
 				<path
 					d={graticulePath}
 					fill='none'
 					stroke='#bcc3d1'
-					strokeWidth={0.5}></path>
+					strokeWidth={0.05}></path>
 			</g>
 			<g>
 				{mapPaths.map((country) => (
 					<path
 						key={`${country.id}-${country.name}`}
 						d={country.svgPath}
-						fill={profilesByCountry.get(country.id) ? "#2dd4bf" : "#ffffff"}
-						stroke='#ffffff'
-						strokeWidth={0.5}
+						fill={
+							profilesByCountry.get(country.id) ?
+								`${getCountryColor(country.id)}`
+							:	MAP_BASE_STYLING.defaultFill
+						}
+						stroke={MAP_BASE_STYLING.borderColor}
+						strokeWidth={0.2}
 						style={{ transition: "all 0.2s ease" }}
 						onMouseEnter={(e) => {
-							(e.target as SVGPathElement).style.fill = "#0d9488"; // Darker teal on hover
+							(e.target as SVGPathElement).style.strokeWidth = "1.25";
 						}}
 						onMouseLeave={(e) => {
-							(e.target as SVGPathElement).style.fill = "#2dd4bf";
+							(e.target as SVGPathElement).style.strokeWidth = "0.5";
 						}}
 						onClick={() => {
 							setCountry(country.id);
