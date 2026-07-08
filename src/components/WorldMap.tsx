@@ -115,14 +115,17 @@ export const WorldMap = ({
 								`${getCountryColor(country.id)}`
 							:	MAP_BASE_STYLING.defaultFill
 						}
+						filter={MAP_BASE_STYLING.glowEffect}
 						stroke={MAP_BASE_STYLING.borderColor}
-						strokeWidth={0.2}
+						strokeWidth={MAP_BASE_STYLING.borderWidth}
 						style={{ transition: "all 0.2s ease" }}
 						onMouseEnter={(e) => {
 							(e.target as SVGPathElement).style.strokeWidth = "1.25";
 						}}
 						onMouseLeave={(e) => {
-							(e.target as SVGPathElement).style.strokeWidth = "0.5";
+							(e.target as SVGPathElement).style.strokeWidth = String(
+								MAP_BASE_STYLING.borderWidth
+							);
 						}}
 						onClick={() => {
 							setCountry(country.id);
