@@ -13,7 +13,7 @@ import { CountryList } from "@/components/CountryList";
 function App() {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [size, setSize] = useState<{ width: number; height: number } | null>(null);
-	const [country, setCountry] = useState<string | null>(null);
+	const [country, setCountry] = useState<string>("NO_COUNTRY_SELECTED");
 
 	const [credentials, setCredentials] = useState<Credentials>({
 		user: "",
@@ -107,7 +107,11 @@ function App() {
 						}
 					</main>
 					<aside className='w-64 shrink-0 border-l border-border bg-card p-6 hidden md:block'>
-						<CountryList data={audience} country={country} />
+						<CountryList
+							data={audience}
+							country={country}
+							setCountry={(country) => setCountry(country)}
+						/>
 					</aside>
 				</div>
 			)}

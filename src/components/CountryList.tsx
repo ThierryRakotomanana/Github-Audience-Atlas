@@ -1,11 +1,15 @@
 import React, { useMemo } from "react";
 import * as Flags from "country-flag-icons/react/3x2";
 import type { AudienceData, LocalizedGithubProfile } from "@/types/api.types";
+import { CountryFlag } from "@/components/CountryFlag";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 interface CountryListProps {
 	data: AudienceData;
 	title?: string;
-	country: string | null;
+	country: string;
+	setCountry: (arg: string) => void;
 }
 
 const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
@@ -21,7 +25,8 @@ function getSafeRegionName(code: string): string {
 export function CountryList({
 	data,
 	title = "Audience by Country",
-	country
+	country,
+	setCountry
 }: CountryListProps) {
 	const usersByCountry = useMemo(() => {
 		return data.followers.reduce((acc, user) => {
@@ -37,10 +42,17 @@ export function CountryList({
 		);
 	}, [usersByCountry]);
 
-	const selectedProfiles = country ? usersByCountry.get(country) : undefined;
+	const selectedProfiles = usersByCountry.get(country) || country;
 
 	return (
-		<div className='flex h-full flex-col gap-4'>
+		<div className='flex h-full flex-col gap-4 relative'>
+			<Button
+				size={"icon-sm"}
+				className={"absolute -top-6 -right-6"}
+				type='reset'
+				onClick={() => setCountry("NO_COUNTRY_SELECTED")}>
+				<X size='60' />
+			</Button>
 			<div className='flex items-center justify-between'>
 				<h3 className='text-sm font-semibold tracking-tight text-foreground'>
 					{title}
@@ -52,7 +64,7 @@ export function CountryList({
 
 			<div className='scrollbar-thin flex-1 overflow-y-auto pr-2 [scrollbar-color:var(--color-border)_transparent]'>
 				<div className='space-y-1'>
-					{!selectedProfiles
+					{selectedProfiles === "NO_COUNTRY_SELECTED"
 						&& sortedCountries.map(([countryCode, profiles]) => {
 							const FlagComponent = (
 								Flags as Record<string, React.ComponentType<{ className?: string }>>
@@ -80,12 +92,13 @@ export function CountryList({
 						})}
 				</div>
 
-				{selectedProfiles && selectedProfiles.length > 0 && (
+				{typeof selectedProfiles !== "string" && selectedProfiles.length > 0 ?
 					<>
 						<hr className='my-4 border-border' />
 						<div className='space-y-1'>
 							<h4 className='mb-2 px-3 text-xs font-medium text-muted-foreground'>
 								Profiles in {getSafeRegionName(country!)}{" "}
+								<CountryFlag isoCode={country} />
 							</h4>
 							{selectedProfiles.map((profile) => (
 								<div
@@ -107,7 +120,16 @@ export function CountryList({
 							))}
 						</div>
 					</>
-				)}
+				:	<>
+						<hr className='my-4 border-border' />
+						<div className='space-y-1'>
+							<h4 className='mb-2 px-3 text-xs font-medium text-muted-foreground'>
+								Profiles in {getSafeRegionName(country!)}{" "}
+								<CountryFlag isoCode={country} />
+							</h4>
+						</div>
+					</>
+				}
 			</div>
 		</div>
 	);
