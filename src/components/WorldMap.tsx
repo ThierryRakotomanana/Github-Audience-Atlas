@@ -1,3 +1,5 @@
+import { getCountryColor, MAP_BASE_STYLING } from "@/lib/getCountryColor";
+import type { AudienceData, LocalizedGithubProfile } from "@/types/api.types";
 import * as d3 from "d3";
 import type { Geometry } from "geojson";
 import { useEffect, useMemo, useState } from "react";
@@ -22,9 +24,15 @@ export interface WorldMapProps {
 	width: number;
 	height: number;
 	setCountry: (country: string) => void;
+	audience: AudienceData;
 }
 
-export const WorldMap = ({ width, height, setCountry }: WorldMapProps) => {
+export const WorldMap = ({
+	width,
+	height,
+	setCountry,
+	audience
+}: WorldMapProps) => {
 	const [geoJson, setGeoJson] = useState<WorldGeoJson | null>(null);
 
 	useEffect(() => {
@@ -63,6 +71,13 @@ export const WorldMap = ({ width, height, setCountry }: WorldMapProps) => {
 		});
 	}, [geoJson, pathGenerator]);
 
+	const profilesByCountry = useMemo(() => {
+		return audience.followers.reduce((acc, profile) => {
+			const regionalProfiles = acc.get(profile.country) || [];
+			return acc.set(profile.country, regionalProfiles);
+		}, new Map<string, LocalizedGithubProfile[]>());
+	}, [audience.followers]);
+
 	if (!geoJson) {
 		return (
 			<div
@@ -79,31 +94,38 @@ export const WorldMap = ({ width, height, setCountry }: WorldMapProps) => {
 	}
 
 	return (
-		<svg width={width} height={height} className='bg-[#f0fdfa]'>
+		<svg width={width} height={height} className='bg-[#030508]'>
 			<g>
-				<path d={pathGenerator({ type: "Sphere" }) as string} fill='#6488bc'></path>
+				<path d={pathGenerator({ type: "Sphere" }) as string} fill='#0B0F19'></path>
 			</g>
 			<g>
 				<path
 					d={graticulePath}
 					fill='none'
 					stroke='#bcc3d1'
-					strokeWidth={0.5}></path>
+					strokeWidth={0.05}></path>
 			</g>
 			<g>
 				{mapPaths.map((country) => (
 					<path
 						key={`${country.id}-${country.name}`}
 						d={country.svgPath}
-						fill='#2dd4bf'
-						stroke='#ffffff'
-						strokeWidth={0.5}
+						fill={
+							profilesByCountry.get(country.id) ?
+								`${getCountryColor(country.id)}`
+							:	MAP_BASE_STYLING.defaultFill
+						}
+						filter={MAP_BASE_STYLING.glowEffect}
+						stroke={MAP_BASE_STYLING.borderColor}
+						strokeWidth={MAP_BASE_STYLING.borderWidth}
 						style={{ transition: "all 0.2s ease" }}
 						onMouseEnter={(e) => {
-							(e.target as SVGPathElement).style.fill = "#0d9488"; // Darker teal on hover
+							(e.target as SVGPathElement).style.strokeWidth = "1.25";
 						}}
 						onMouseLeave={(e) => {
-							(e.target as SVGPathElement).style.fill = "#2dd4bf";
+							(e.target as SVGPathElement).style.strokeWidth = String(
+								MAP_BASE_STYLING.borderWidth
+							);
 						}}
 						onClick={() => {
 							setCountry(country.id);
