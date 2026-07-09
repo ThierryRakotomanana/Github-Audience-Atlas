@@ -15,7 +15,7 @@ const FLAG_COMPONENTS = Flags as unknown as Record<
 
 function CountryFlagBase({
 	isoCode,
-	className = "h-full w-full object-cover"
+	className = "h-4 w-6 object-cover"
 }: CountryFlagProps) {
 	const code = isoCode.toUpperCase();
 	const label = getRegionName(code);

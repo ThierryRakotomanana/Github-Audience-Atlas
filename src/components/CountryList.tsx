@@ -1,16 +1,14 @@
-import React, { useMemo } from "react";
-import * as Flags from "country-flag-icons/react/3x2";
+import { useMemo } from "react";
+import { X } from "lucide-react";
 import type { AudienceData, LocalizedGithubProfile } from "@/types/api.types";
 import { CountryFlag } from "@/components/CountryFlag";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
 import { getRegionName } from "@/lib/region";
 
 interface CountryListProps {
 	data: AudienceData;
 	title?: string;
-	country: string;
-	setCountry: (arg: string) => void;
+	country: string | null;
+	setCountry: (arg: string | null) => void;
 }
 
 export function CountryList({
@@ -33,94 +31,89 @@ export function CountryList({
 		);
 	}, [usersByCountry]);
 
-	const selectedProfiles = usersByCountry.get(country) || country;
+	const selectedProfiles = country ? (usersByCountry.get(country) ?? []) : null;
 
 	return (
-		<div className='flex h-full flex-col gap-4 relative'>
-			<Button
-				size={"icon-sm"}
-				className={"absolute -top-6 -right-6"}
-				type='reset'
-				onClick={() => setCountry("NO_COUNTRY_SELECTED")}>
-				<X size='60' />
-			</Button>
-			<div className='flex items-center justify-between'>
-				<h3 className='text-sm font-semibold tracking-tight text-foreground'>
-					{title}
-				</h3>
-				<span className='font-mono text-xs text-muted-foreground'>
-					{usersByCountry.size} regions
+		<div className='flex h-full flex-col gap-4'>
+			<div className='flex items-center justify-between gap-2'>
+				{country ?
+					<button
+						type='button'
+						onClick={() => setCountry(null)}
+						className='inline-flex min-w-0 items-center gap-2 rounded-full border border-border bg-muted/40 py-1 pl-2 pr-1 text-sm font-medium text-foreground transition-colors hover:bg-muted'>
+						<CountryFlag
+							isoCode={country}
+							className='h-3.5 w-5 shrink-0 rounded-sm'
+						/>
+						<span className='truncate'>{getRegionName(country)}</span>
+						<span className='flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground'>
+							<X size={12} />
+						</span>
+					</button>
+				:	<h3 className='text-sm font-semibold tracking-tight text-foreground'>
+						{title}
+					</h3>
+				}
+				<span className='shrink-0 font-mono text-xs text-muted-foreground'>
+					{country ? usersByCountry.get(country)?.length : usersByCountry.size}
 				</span>
 			</div>
 
 			<div className='scrollbar-thin flex-1 overflow-y-auto pr-2 [scrollbar-color:var(--color-border)_transparent]'>
-				<div className='space-y-1'>
-					{selectedProfiles === "NO_COUNTRY_SELECTED"
-						&& sortedCountries.map(([countryCode, profiles]) => {
-							const FlagComponent = (
-								Flags as Record<string, React.ComponentType<{ className?: string }>>
-							)[countryCode.toUpperCase()];
-
-							return (
-								<div
-									key={countryCode}
-									className='flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50'>
-									<div className='flex min-w-0 items-center gap-3'>
-										<div className='shadow-xs flex h-4 w-6 shrink-0 overflow-hidden rounded-sm border border-border/40 bg-muted object-cover'>
-											{FlagComponent ?
-												<FlagComponent className='h-full w-full object-cover' />
-											:	<div className='h-full w-full bg-muted-foreground/20' />}
-										</div>
-										<span className='truncate font-medium text-foreground'>
-											{getRegionName(countryCode)}
-										</span>
-									</div>
-									<span className='font-mono text-xs font-semibold text-muted-foreground'>
-										{profiles.length}
+				{selectedProfiles === null && (
+					<div className='space-y-1'>
+						{sortedCountries.map(([code, profiles]) => (
+							<div
+								key={code}
+								role='button'
+								tabIndex={0}
+								onClick={() => setCountry(code)}
+								onKeyDown={(e) => e.key === "Enter" && setCountry(code)}
+								className='flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-muted/50'>
+								<div className='flex min-w-0 items-center gap-3'>
+									<CountryFlag
+										isoCode={code}
+										className='h-4 w-6 shrink-0 rounded-sm border border-border/40'
+									/>
+									<span className='truncate font-medium text-foreground'>
+										{getRegionName(code)}
 									</span>
 								</div>
-							);
-						})}
-				</div>
+								<span className='font-mono text-xs font-semibold text-muted-foreground'>
+									{profiles.length}
+								</span>
+							</div>
+						))}
+					</div>
+				)}
 
-				{typeof selectedProfiles !== "string" && selectedProfiles.length > 0 ?
-					<>
-						<hr className='my-4 border-border' />
-						<div className='space-y-1'>
-							<h4 className='mb-2 px-3 text-xs font-medium text-muted-foreground'>
-								Profiles in {getRegionName(country!)}{" "}
-								<CountryFlag isoCode={country} />
-							</h4>
-							{selectedProfiles.map((profile) => (
+				{selectedProfiles !== null && (
+					<div className='space-y-1'>
+						{selectedProfiles.length > 0 ?
+							selectedProfiles.map((profile) => (
 								<div
 									key={profile.id}
 									className='flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50'>
-									<div className='flex min-w-0 items-center gap-3'>
-										<div className='shadow-xs flex h-9 w-9 items-center justify-center shrink-0 overflow-hidden rounded-sm border border-border/40 bg-muted object-cover text-[10px] font-mono'>
-											<img
-												src={profile.avatar_url}
-												alt={profile.login}
-												className='w-9 h-9 rounded-full border border-border shrink-0'
-											/>
-										</div>
-										<span className='truncate font-medium text-foreground'>
-											{profile.name}
-										</span>
+									<div className='flex min-w-0 items-center justify-evenly gap-3'>
+										<img
+											src={profile.avatar_url}
+											alt={profile.login}
+											className='h-9 w-9 shrink-0 rounded-full border border-border'
+										/>
+										<a href={profile.html_url} target='_blank'>
+											<span className='truncate font-medium text-foreground'>
+												{profile.name}
+											</span>
+										</a>
 									</div>
 								</div>
-							))}
-						</div>
-					</>
-				:	<>
-						<hr className='my-4 border-border' />
-						<div className='space-y-1'>
-							<h4 className='mb-2 px-3 text-xs font-medium text-muted-foreground'>
-								Profiles in {getRegionName(country!)}{" "}
-								<CountryFlag isoCode={country} />
-							</h4>
-						</div>
-					</>
-				}
+							))
+						:	<p className='px-3 py-6 text-center text-sm text-muted-foreground'>
+								No followers from this region yet.
+							</p>
+						}
+					</div>
+				)}
 			</div>
 		</div>
 	);
