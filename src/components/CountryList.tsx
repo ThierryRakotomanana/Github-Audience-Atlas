@@ -4,22 +4,13 @@ import type { AudienceData, LocalizedGithubProfile } from "@/types/api.types";
 import { CountryFlag } from "@/components/CountryFlag";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { getRegionName } from "@/lib/region";
 
 interface CountryListProps {
 	data: AudienceData;
 	title?: string;
 	country: string;
 	setCountry: (arg: string) => void;
-}
-
-const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
-
-function getSafeRegionName(code: string): string {
-	try {
-		return regionNames.of(code) || code;
-	} catch {
-		return code;
-	}
 }
 
 export function CountryList({
@@ -81,7 +72,7 @@ export function CountryList({
 											:	<div className='h-full w-full bg-muted-foreground/20' />}
 										</div>
 										<span className='truncate font-medium text-foreground'>
-											{getSafeRegionName(countryCode)}
+											{getRegionName(countryCode)}
 										</span>
 									</div>
 									<span className='font-mono text-xs font-semibold text-muted-foreground'>
@@ -97,7 +88,7 @@ export function CountryList({
 						<hr className='my-4 border-border' />
 						<div className='space-y-1'>
 							<h4 className='mb-2 px-3 text-xs font-medium text-muted-foreground'>
-								Profiles in {getSafeRegionName(country!)}{" "}
+								Profiles in {getRegionName(country!)}{" "}
 								<CountryFlag isoCode={country} />
 							</h4>
 							{selectedProfiles.map((profile) => (
@@ -124,7 +115,7 @@ export function CountryList({
 						<hr className='my-4 border-border' />
 						<div className='space-y-1'>
 							<h4 className='mb-2 px-3 text-xs font-medium text-muted-foreground'>
-								Profiles in {getSafeRegionName(country!)}{" "}
+								Profiles in {getRegionName(country!)}{" "}
 								<CountryFlag isoCode={country} />
 							</h4>
 						</div>
