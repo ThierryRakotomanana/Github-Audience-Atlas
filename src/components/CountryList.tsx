@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ExternalLink, Search, SearchX, X } from "lucide-react";
+import { ExternalLink, Search, X } from "lucide-react";
 import type { LocalizedGithubProfile } from "@/types/api.types";
 import { CountryFlag } from "@/components/CountryFlag";
 import { getRegionName, UNKNOWN_REGION } from "@/lib/region";
@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { RegionIcon } from "@/components/RegionIcon.Panel";
+import { EmptyState } from "@/components/EmptyState.Panel";
 
 interface CountryListProps {
 	data: LocalizedGithubProfile[];
@@ -17,15 +18,6 @@ interface CountryListProps {
 }
 
 const EMPTY_PROFILES: LocalizedGithubProfile[] = [];
-
-function EmptyState({ text }: { text: string }) {
-	return (
-		<div className='flex flex-col items-center gap-2 px-3 py-10 text-center'>
-			<SearchX className='h-5 w-5 text-muted-foreground/60' />
-			<p className='text-sm text-muted-foreground'>{text}</p>
-		</div>
-	);
-}
 
 export function CountryList({ data, country, setCountry }: CountryListProps) {
 	const [search, setSearch] = useState("");
