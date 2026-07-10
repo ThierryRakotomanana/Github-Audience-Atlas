@@ -110,7 +110,7 @@ function App() {
 							</div>
 						}
 					</main>
-					<aside className='w-64 shrink-0 border-l border-border bg-card p-6 hidden md:block'>
+					<aside className='w-64 shrink-0 border-l border-border bg-card py-6 pl-6 pr-2 hidden md:block'>
 						<CountryList
 							data={audience[audienceType]}
 							country={country}
