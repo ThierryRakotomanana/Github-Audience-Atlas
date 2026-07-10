@@ -1,14 +1,14 @@
 import { useMemo, useState } from "react";
-import { ExternalLink, Globe2, Search, SearchX, X } from "lucide-react";
+import { ExternalLink, Search, SearchX, X } from "lucide-react";
 import type { LocalizedGithubProfile } from "@/types/api.types";
 import { CountryFlag } from "@/components/CountryFlag";
 import { getRegionName, UNKNOWN_REGION } from "@/lib/region";
 import { Badge } from "@/components/ui/badge";
 import { getCountryColor } from "@/lib/getCountryColor";
-import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { RegionIcon } from "@/components/RegionIcon.Panel";
 
 interface CountryListProps {
 	data: LocalizedGithubProfile[];
@@ -17,21 +17,6 @@ interface CountryListProps {
 }
 
 const EMPTY_PROFILES: LocalizedGithubProfile[] = [];
-
-function RegionIcon({ code, className }: { code: string; className?: string }) {
-	if (code === UNKNOWN_REGION) {
-		return (
-			<span
-				className={cn(
-					"flex items-center justify-center bg-muted text-muted-foreground",
-					className
-				)}>
-				<Globe2 className='h-3 w-3' />
-			</span>
-		);
-	}
-	return <CountryFlag isoCode={code} className={className} />;
-}
 
 function EmptyState({ text }: { text: string }) {
 	return (
