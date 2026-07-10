@@ -3,20 +3,16 @@ import { X } from "lucide-react";
 import type { LocalizedGithubProfile } from "@/types/api.types";
 import { CountryFlag } from "@/components/CountryFlag";
 import { getRegionName } from "@/lib/region";
+import { Badge } from "@/components/ui/badge";
+import { getCountryColor } from "@/lib/getCountryColor";
 
 interface CountryListProps {
 	data: LocalizedGithubProfile[];
-	title?: string;
 	country: string | null;
 	setCountry: (arg: string | null) => void;
 }
 
-export function CountryList({
-	data,
-	title = "Audience by Country",
-	country,
-	setCountry
-}: CountryListProps) {
+export function CountryList({ data, country, setCountry }: CountryListProps) {
 	const usersByCountry = useMemo(() => {
 		return data.reduce((acc, user) => {
 			const regionalUsers = acc.get(user.country) || [];
@@ -37,26 +33,38 @@ export function CountryList({
 		<div className='flex h-full flex-col gap-4'>
 			<div className='flex items-center justify-between gap-2'>
 				{country ?
-					<button
-						type='button'
-						onClick={() => setCountry(null)}
-						className='inline-flex min-w-0 items-center gap-2 rounded-full border border-border bg-muted/40 py-1 pl-2 pr-1 text-sm font-medium text-foreground transition-colors hover:bg-muted'>
+					<div
+						className={`flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-3 py-2`}
+						style={{ background: `${getCountryColor(country)}20` }}>
 						<CountryFlag
 							isoCode={country}
-							className='h-3.5 w-5 shrink-0 rounded-sm'
+							className='h-5 w-7 shrink-0 rounded-sm border border-border/40'
 						/>
-						<span className='truncate'>{getRegionName(country)}</span>
-						<span className='flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground'>
-							<X size={12} />
-						</span>
-					</button>
-				:	<h3 className='text-sm font-semibold tracking-tight text-foreground'>
-						{title}
-					</h3>
+						<div className='min-w-0'>
+							<button
+								type='button'
+								onClick={() => setCountry(null)}
+								className='inline-flex min-w-0 items-center gap-2 rounded-full border border-border bg-muted/40 py-1 pl-2 pr-1 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted'>
+								<span className='truncate'>{getRegionName(country)}</span>
+								<span className='flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground'>
+									<X size={12} />
+								</span>
+							</button>
+							<Badge
+								variant='outline'
+								className='shrink-0 font-mono text-xs font-normal bg-muted/40 text-foreground/60'>
+								{country ?
+									`${selectedProfiles?.length ?? 0} followers`
+								:	`${sortedCountries.length} regions`}
+							</Badge>
+						</div>
+					</div>
+				:	<Badge
+						variant='outline'
+						className='shrink-0 font-mono text-xs font-normal bg-muted/40 text-foreground/60'>
+						{sortedCountries.length} country
+					</Badge>
 				}
-				<span className='shrink-0 font-mono text-xs text-muted-foreground'>
-					{country ? usersByCountry.get(country)?.length : usersByCountry.size}
-				</span>
 			</div>
 
 			<div className='scrollbar-thin flex-1 overflow-y-auto pr-2 [scrollbar-color:var(--color-border)_transparent]'>
