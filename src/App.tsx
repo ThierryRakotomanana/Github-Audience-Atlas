@@ -10,6 +10,8 @@ import { ErrorView } from "@/components/ErrorView";
 import { WorldMap } from "@/components/WorldMap";
 import { CountryList } from "@/components/CountryList";
 
+type AudienceType = "followers" | "following" | "ghosts";
+
 function App() {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [size, setSize] = useState<{ width: number; height: number } | null>(null);
@@ -19,6 +21,8 @@ function App() {
 		user: "",
 		token: ""
 	});
+
+	const [audienceType, setAudienceType] = useState<AudienceType>("followers");
 
 	const { status, steps, error, pct, estimate, user, audience, resetAt } =
 		useAudience(credentials);
@@ -99,7 +103,7 @@ function App() {
 								width={size.width}
 								height={size.height}
 								setCountry={setCountry}
-								audience={audience}
+								audience={audience[audienceType]}
 							/>
 						:	<div className='absolute inset-0 flex items-center justify-center text-sm text-muted-foreground'>
 								Calculating map dimensions...
@@ -108,7 +112,7 @@ function App() {
 					</main>
 					<aside className='w-64 shrink-0 border-l border-border bg-card p-6 hidden md:block'>
 						<CountryList
-							data={audience}
+							data={audience[audienceType]}
 							country={country}
 							setCountry={(country) => setCountry(country)}
 						/>
@@ -116,7 +120,14 @@ function App() {
 				</div>
 			)}
 			<footer className='h-8 w-full border-t border-border bg-muted/40 px-6 flex items-center justify-between text-xs text-muted-foreground shrink-0'>
-				<p>© 2026 Your Company</p>
+				<p>© 2026 Atals Audience</p>
+				{
+					<div className='flex gap-5 text-xs font-medium text-foreground truncate'>
+						<span onClick={() => setAudienceType("followers")}>follower</span>
+						<span onClick={() => setAudienceType("following")}>following</span>
+						<span onClick={() => setAudienceType("ghosts")}>ghost</span>
+					</div>
+				}
 				<div className='flex gap-4'>
 					<a href='#' className='hover:underline'>
 						Privacy
