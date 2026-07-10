@@ -1,5 +1,5 @@
 import { getCountryColor, MAP_BASE_STYLING } from "@/lib/getCountryColor";
-import type { AudienceData, LocalizedGithubProfile } from "@/types/api.types";
+import type { LocalizedGithubProfile } from "@/types/api.types";
 import * as d3 from "d3";
 import type { Geometry } from "geojson";
 import { useEffect, useMemo, useState } from "react";
@@ -24,7 +24,7 @@ export interface WorldMapProps {
 	width: number;
 	height: number;
 	setCountry: (country: string) => void;
-	audience: AudienceData;
+	audience: LocalizedGithubProfile[];
 }
 
 export const WorldMap = ({
@@ -72,11 +72,11 @@ export const WorldMap = ({
 	}, [geoJson, pathGenerator]);
 
 	const profilesByCountry = useMemo(() => {
-		return audience.followers.reduce((acc, profile) => {
+		return audience.reduce((acc, profile) => {
 			const regionalProfiles = acc.get(profile.country) || [];
 			return acc.set(profile.country, regionalProfiles);
 		}, new Map<string, LocalizedGithubProfile[]>());
-	}, [audience.followers]);
+	}, [audience]);
 
 	if (!geoJson) {
 		return (
