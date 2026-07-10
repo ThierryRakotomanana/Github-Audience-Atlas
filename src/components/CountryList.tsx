@@ -1,15 +1,31 @@
 import { useMemo } from "react";
-import { X } from "lucide-react";
+import { Globe2, X } from "lucide-react";
 import type { LocalizedGithubProfile } from "@/types/api.types";
 import { CountryFlag } from "@/components/CountryFlag";
-import { getRegionName } from "@/lib/region";
+import { getRegionName, UNKNOWN_REGION } from "@/lib/region";
 import { Badge } from "@/components/ui/badge";
 import { getCountryColor } from "@/lib/getCountryColor";
+import { cn } from "@/lib/utils";
 
 interface CountryListProps {
 	data: LocalizedGithubProfile[];
 	country: string | null;
 	setCountry: (arg: string | null) => void;
+}
+
+function RegionIcon({ code, className }: { code: string; className?: string }) {
+	if (code === UNKNOWN_REGION) {
+		return (
+			<span
+				className={cn(
+					"flex items-center justify-center bg-muted text-muted-foreground",
+					className
+				)}>
+				<Globe2 className='h-3 w-3' />
+			</span>
+		);
+	}
+	return <CountryFlag isoCode={code} className={className} />;
 }
 
 export function CountryList({ data, country, setCountry }: CountryListProps) {
@@ -26,6 +42,13 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 			(a, b) => b[1].length - a[1].length
 		);
 	}, [usersByCountry]);
+
+	const maxCount = useMemo(
+		() => Math.max(1, ...sortedCountries.map(([, profiles]) => profiles.length)),
+		[sortedCountries]
+	);
+
+	const totalFollowers = data.length;
 
 	const selectedProfiles = country ? (usersByCountry.get(country) ?? []) : null;
 
@@ -71,26 +94,36 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 				{selectedProfiles === null && (
 					<div className='space-y-1'>
 						{sortedCountries.map(([code, profiles]) => (
-							<div
+							<button
 								key={code}
-								role='button'
-								tabIndex={0}
+								type='button'
 								onClick={() => setCountry(code)}
-								onKeyDown={(e) => e.key === "Enter" && setCountry(code)}
-								className='flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-muted/50'>
-								<div className='flex min-w-0 items-center gap-3'>
-									<CountryFlag
-										isoCode={code}
+								className='group relative flex w-full items-center justify-between overflow-hidden rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50'>
+								<span
+									aria-hidden
+									className='absolute inset-y-0 left-0 bg-primary/10 transition-all group-hover:bg-primary/15'
+									style={{ width: `${(profiles.length / maxCount) * 100}%` }}
+								/>
+								<span className='relative z-10 flex min-w-0 items-center gap-3'>
+									<RegionIcon
+										code={code}
 										className='h-4 w-6 shrink-0 rounded-sm border border-border/40'
 									/>
-									<span className='truncate font-medium text-foreground'>
-										{getRegionName(code)}
+									<span className='flex min-w-0 flex-col'>
+										<span className='truncate font-medium text-foreground'>
+											{getRegionName(code)}
+										</span>
+										<span className='text-xs text-muted-foreground'>
+											{Math.round((profiles.length / totalFollowers) * 100)}%
+										</span>
 									</span>
-								</div>
-								<span className='font-mono text-xs font-semibold text-muted-foreground'>
-									{profiles.length}
 								</span>
-							</div>
+								<Badge
+									variant='secondary'
+									className='relative z-10 shrink-0 font-mono text-xs'>
+									{profiles.length}
+								</Badge>
+							</button>
 						))}
 					</div>
 				)}
