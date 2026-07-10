@@ -115,7 +115,6 @@ export const WorldMap = ({
 								`${getCountryColor(country.id)}`
 							:	MAP_BASE_STYLING.defaultFill
 						}
-						filter={MAP_BASE_STYLING.glowEffect}
 						stroke={MAP_BASE_STYLING.borderColor}
 						strokeWidth={MAP_BASE_STYLING.borderWidth}
 						style={{ transition: "all 0.2s ease" }}
