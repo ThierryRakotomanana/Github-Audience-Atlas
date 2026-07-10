@@ -105,7 +105,24 @@ export const WorldMap = ({
 					stroke='#bcc3d1'
 					strokeWidth={0.05}></path>
 			</g>
-			<g>
+			<defs>
+				<filter id='map-glow' x='-20%' y='-20%' width='140%' height='140%'>
+					<feGaussianBlur stdDeviation='15' result='blur' />
+					<feFlood flood-color='rgba(0, 255, 239, 0.25)' result='color' />
+					<feComposite in='color' in2='blur' operator='in' result='coloredGlow' />
+					<feComposite
+						in='coloredGlow'
+						in2='SourceAlpha'
+						operator='out'
+						result='hollowGlow'
+					/>
+					<feMerge>
+						<feMergeNode in='hollowGlow' />
+						<feMergeNode in='SourceGraphic' />
+					</feMerge>
+				</filter>
+			</defs>
+			<g filter='url(#map-glow)'>
 				{mapPaths.map((country) => (
 					<path
 						key={`${country.id}-${country.name}`}

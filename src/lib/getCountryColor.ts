@@ -184,8 +184,7 @@ export const MAP_BASE_STYLING = {
 	defaultFill: "#1E1E24",
 	borderColor: "#FFFFFF",
 	borderWidth: 0.125,
-	highlightFill: "#00E5FF",
-	glowEffect: "drop-shadow(0px 0px 24px rgba(0, 229, 255, 0.15))"
+	highlightFill: "#00E5FF"
 };
 
 export function getCountryColor(isoAlpha2Eh: string): string {
