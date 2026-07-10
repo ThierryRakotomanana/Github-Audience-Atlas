@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { X } from "lucide-react";
-import type { AudienceData, LocalizedGithubProfile } from "@/types/api.types";
+import type { LocalizedGithubProfile } from "@/types/api.types";
 import { CountryFlag } from "@/components/CountryFlag";
 import { getRegionName } from "@/lib/region";
 
 interface CountryListProps {
-	data: AudienceData;
+	data: LocalizedGithubProfile[];
 	title?: string;
 	country: string | null;
 	setCountry: (arg: string | null) => void;
@@ -18,12 +18,12 @@ export function CountryList({
 	setCountry
 }: CountryListProps) {
 	const usersByCountry = useMemo(() => {
-		return data.followers.reduce((acc, user) => {
+		return data.reduce((acc, user) => {
 			const regionalUsers = acc.get(user.country) || [];
 			regionalUsers.push(user);
 			return acc.set(user.country, regionalUsers);
 		}, new Map<string, LocalizedGithubProfile[]>());
-	}, [data.followers]);
+	}, [data]);
 
 	const sortedCountries = useMemo(() => {
 		return Array.from(usersByCountry.entries()).sort(
