@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { ExternalLink, Globe2, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ExternalLink, Globe2, Search, SearchX, X } from "lucide-react";
 import type { LocalizedGithubProfile } from "@/types/api.types";
 import { CountryFlag } from "@/components/CountryFlag";
 import { getRegionName, UNKNOWN_REGION } from "@/lib/region";
@@ -7,12 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { getCountryColor } from "@/lib/getCountryColor";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 
 interface CountryListProps {
 	data: LocalizedGithubProfile[];
 	country: string | null;
 	setCountry: (arg: string | null) => void;
 }
+
+const EMPTY_PROFILES: LocalizedGithubProfile[] = [];
 
 function RegionIcon({ code, className }: { code: string; className?: string }) {
 	if (code === UNKNOWN_REGION) {
@@ -29,12 +33,32 @@ function RegionIcon({ code, className }: { code: string; className?: string }) {
 	return <CountryFlag isoCode={code} className={className} />;
 }
 
+function EmptyState({ text }: { text: string }) {
+	return (
+		<div className='flex flex-col items-center gap-2 px-3 py-10 text-center'>
+			<SearchX className='h-5 w-5 text-muted-foreground/60' />
+			<p className='text-sm text-muted-foreground'>{text}</p>
+		</div>
+	);
+}
+
 export function CountryList({ data, country, setCountry }: CountryListProps) {
+	const [search, setSearch] = useState("");
+	const [prevCountry, setPrevCountry] = useState(country);
+
+	if (country !== prevCountry) {
+		setPrevCountry(country);
+		setSearch("");
+	}
+
+	const totalFollowers = data.length;
+
 	const usersByCountry = useMemo(() => {
 		return data.reduce((acc, user) => {
-			const regionalUsers = acc.get(user.country) || [];
+			const code = user.country || UNKNOWN_REGION;
+			const regionalUsers = acc.get(code) || [];
 			regionalUsers.push(user);
-			return acc.set(user.country, regionalUsers);
+			return acc.set(code, regionalUsers);
 		}, new Map<string, LocalizedGithubProfile[]>());
 	}, [data]);
 
@@ -49,9 +73,31 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 		[sortedCountries]
 	);
 
-	const totalFollowers = data.length;
+	const unknownCount = usersByCountry.get(UNKNOWN_REGION)?.length ?? 0;
 
-	const selectedProfiles = country ? (usersByCountry.get(country) ?? []) : null;
+	const filteredCountries = useMemo(() => {
+		if (!search.trim()) return sortedCountries;
+		const q = search.trim().toLowerCase();
+		return sortedCountries.filter(([code]) =>
+			getRegionName(code).toLowerCase().includes(q)
+		);
+	}, [sortedCountries, search]);
+
+	const selectedProfiles = useMemo(
+		() => (country ? (usersByCountry.get(country) ?? EMPTY_PROFILES) : null),
+		[country, usersByCountry]
+	);
+
+	const filteredProfiles = useMemo(() => {
+		if (!selectedProfiles) return EMPTY_PROFILES;
+		if (!search.trim()) return selectedProfiles;
+		const q = search.trim().toLowerCase();
+		return selectedProfiles.filter(
+			(p) =>
+				(p.name ?? "").toLowerCase().includes(q)
+				|| p.login.toLowerCase().includes(q)
+		);
+	}, [selectedProfiles, search]);
 
 	return (
 		<div className='flex h-full flex-col gap-4'>
@@ -91,80 +137,96 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 				}
 			</div>
 
+			<div className='relative'>
+				<Search className='pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground' />
+				<Input
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+					placeholder={country ? "Search followers…" : "Search countries…"}
+					className='h-8 pl-8 text-sm'
+				/>
+			</div>
+
 			<div className='scrollbar-thin flex-1 overflow-y-auto pr-2 [scrollbar-color:var(--color-border)_transparent]'>
-				{selectedProfiles === null && (
-					<div className='space-y-1'>
-						{sortedCountries.map(([code, profiles]) => (
-							<button
-								key={code}
-								type='button'
-								onClick={() => setCountry(code)}
-								className='group relative flex w-full items-center justify-between overflow-hidden rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50'>
-								<span
-									aria-hidden
-									className='absolute inset-y-0 left-0 bg-primary/10 transition-all group-hover:bg-primary/15'
-									style={{ width: `${(profiles.length / maxCount) * 100}%` }}
-								/>
-								<span className='relative z-10 flex min-w-0 items-center gap-3'>
-									<RegionIcon
-										code={code}
-										className='h-4 w-6 shrink-0 rounded-sm border border-border/40'
+				{selectedProfiles === null ?
+					filteredCountries.length > 0 ?
+						<div className='space-y-1'>
+							{filteredCountries.map(([code, profiles]) => (
+								<button
+									key={code}
+									type='button'
+									onClick={() => setCountry(code)}
+									className='group relative flex w-full items-center justify-between overflow-hidden rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50'>
+									<span
+										aria-hidden
+										className='absolute inset-y-0 left-0 bg-primary/10 transition-all group-hover:bg-primary/15'
+										style={{ width: `${(profiles.length / maxCount) * 100}%` }}
 									/>
+									<span className='relative z-10 flex min-w-0 items-center gap-3'>
+										<RegionIcon
+											code={code}
+											className='h-4 w-6 shrink-0 rounded-sm border border-border/40'
+										/>
+										<span className='flex min-w-0 flex-col'>
+											<span className='truncate font-medium text-foreground'>
+												{getRegionName(code)}
+											</span>
+											<span className='text-xs text-muted-foreground'>
+												{Math.round((profiles.length / totalFollowers) * 100)}%
+											</span>
+										</span>
+									</span>
+									<Badge
+										variant='secondary'
+										className='relative z-10 shrink-0 font-mono text-xs'>
+										{profiles.length}
+									</Badge>
+								</button>
+							))}
+						</div>
+					:	<EmptyState text={`No countries match "${search}"`} />
+				: filteredProfiles.length > 0 ?
+					<div className='space-y-1'>
+						{filteredProfiles.map((profile) => (
+							<a
+								key={profile.id}
+								href={profile.html_url}
+								target='_blank'
+								rel='noreferrer'
+								className='group flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50'>
+								<span className='flex min-w-0 items-center gap-3'>
+									<Avatar className='h-9 w-9 border border-border'>
+										<AvatarImage src={profile.avatar_url} alt={profile.login} />
+										<AvatarFallback className='text-xs'>
+											{(profile.name ?? profile.login).slice(0, 2).toUpperCase()}
+										</AvatarFallback>
+									</Avatar>
 									<span className='flex min-w-0 flex-col'>
 										<span className='truncate font-medium text-foreground'>
-											{getRegionName(code)}
+											{profile.name ?? profile.login}
 										</span>
-										<span className='text-xs text-muted-foreground'>
-											{Math.round((profiles.length / totalFollowers) * 100)}%
+										<span className='truncate font-mono text-xs text-muted-foreground'>
+											@{profile.login}
 										</span>
 									</span>
 								</span>
-								<Badge
-									variant='secondary'
-									className='relative z-10 shrink-0 font-mono text-xs'>
-									{profiles.length}
-								</Badge>
-							</button>
+								<ExternalLink className='h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100' />
+							</a>
 						))}
 					</div>
-				)}
-
-				{selectedProfiles !== null && (
-					<div className='space-y-1'>
-						{selectedProfiles.length > 0 ?
-							selectedProfiles.map((profile) => (
-								<a
-									key={profile.id}
-									href={profile.html_url}
-									target='_blank'
-									rel='noreferrer'
-									className='group flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50'>
-									<span className='flex min-w-0 items-center gap-3'>
-										<Avatar className='h-9 w-9 border border-border'>
-											<AvatarImage src={profile.avatar_url} alt={profile.login} />
-											<AvatarFallback className='text-xs'>
-												{(profile.name ?? profile.login).slice(0, 2).toUpperCase()}
-											</AvatarFallback>
-										</Avatar>
-										<span className='flex min-w-0 flex-col'>
-											<span className='truncate font-medium text-foreground'>
-												{profile.name ?? profile.login}
-											</span>
-											<span className='truncate font-mono text-xs text-muted-foreground'>
-												@{profile.login}
-											</span>
-										</span>
-									</span>
-									<ExternalLink className='h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100' />
-								</a>
-							))
-						:	<p className='px-3 py-6 text-center text-sm text-muted-foreground'>
-								No followers from this region yet.
-							</p>
-						}
-					</div>
-				)}
+				: selectedProfiles && selectedProfiles.length === 0 ?
+					<EmptyState text='No followers from this region yet.' />
+				:	<EmptyState text={`No followers match "${search}"`} />}
 			</div>
+			{!country && unknownCount > 0 && (
+				<>
+					<Separator />
+					<p className='px-1 text-xs text-muted-foreground'>
+						{unknownCount} follower{unknownCount > 1 ? "s" : ""} without a public
+						location aren't shown on the map.
+					</p>
+				</>
+			)}
 		</div>
 	);
 }
