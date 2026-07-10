@@ -1,11 +1,12 @@
 import { useMemo } from "react";
-import { Globe2, X } from "lucide-react";
+import { ExternalLink, Globe2, X } from "lucide-react";
 import type { LocalizedGithubProfile } from "@/types/api.types";
 import { CountryFlag } from "@/components/CountryFlag";
 import { getRegionName, UNKNOWN_REGION } from "@/lib/region";
 import { Badge } from "@/components/ui/badge";
 import { getCountryColor } from "@/lib/getCountryColor";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface CountryListProps {
 	data: LocalizedGithubProfile[];
@@ -132,22 +133,30 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 					<div className='space-y-1'>
 						{selectedProfiles.length > 0 ?
 							selectedProfiles.map((profile) => (
-								<div
+								<a
 									key={profile.id}
-									className='flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50'>
-									<div className='flex min-w-0 items-center justify-evenly gap-3'>
-										<img
-											src={profile.avatar_url}
-											alt={profile.login}
-											className='h-9 w-9 shrink-0 rounded-full border border-border'
-										/>
-										<a href={profile.html_url} target='_blank'>
+									href={profile.html_url}
+									target='_blank'
+									rel='noreferrer'
+									className='group flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50'>
+									<span className='flex min-w-0 items-center gap-3'>
+										<Avatar className='h-9 w-9 border border-border'>
+											<AvatarImage src={profile.avatar_url} alt={profile.login} />
+											<AvatarFallback className='text-xs'>
+												{(profile.name ?? profile.login).slice(0, 2).toUpperCase()}
+											</AvatarFallback>
+										</Avatar>
+										<span className='flex min-w-0 flex-col'>
 											<span className='truncate font-medium text-foreground'>
-												{profile.name}
+												{profile.name ?? profile.login}
 											</span>
-										</a>
-									</div>
-								</div>
+											<span className='truncate font-mono text-xs text-muted-foreground'>
+												@{profile.login}
+											</span>
+										</span>
+									</span>
+									<ExternalLink className='h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100' />
+								</a>
 							))
 						:	<p className='px-3 py-6 text-center text-sm text-muted-foreground'>
 								No followers from this region yet.
