@@ -1,8 +1,9 @@
+import { useGeoJson } from "@/hooks/useGeoJson";
 import { getCountryColor, MAP_BASE_STYLING } from "@/lib/getCountryColor";
 import type { LocalizedGithubProfile } from "@/types/api.types";
 import * as d3 from "d3";
 import type { Geometry } from "geojson";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 interface GeoProperties {
 	NAME_EN: string;
@@ -33,18 +34,15 @@ export const WorldMap = ({
 	setCountry,
 	audience
 }: WorldMapProps) => {
-	const [geoJson, setGeoJson] = useState<WorldGeoJson | null>(null);
+	const url =
+		"https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson";
 
-	useEffect(() => {
-		fetch(
-			"https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson"
-		)
-			.then((response) => response.json())
-			.then((data: WorldGeoJson) => {
-				setGeoJson(data);
-			})
-			.catch((err) => console.error("Error loading map data:", err));
-	}, []);
+	const {
+		data: geoJson,
+		isLoading,
+		error: loadError,
+		retry: setReloadKey
+	} = useGeoJson<WorldGeoJson>(url);
 
 	const projection = useMemo(() => {
 		return d3.geoNaturalEarth1().fitSize([width, height], { type: "Sphere" });
@@ -78,17 +76,28 @@ export const WorldMap = ({
 		}, new Map<string, LocalizedGithubProfile[]>());
 	}, [audience]);
 
-	if (!geoJson) {
+	if (loadError) {
 		return (
 			<div
-				style={{
-					width,
-					height,
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center"
-				}}>
-				<p>Loading global coordinates...</p>
+				style={{ width, height }}
+				className='flex flex-col items-center justify-center gap-3 text-sm text-muted-foreground'>
+				<p>Couldn&apos;t load the world map.</p>
+				<button
+					type='button'
+					onClick={setReloadKey}
+					className='rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted'>
+					Retry
+				</button>
+			</div>
+		);
+	}
+
+	if (isLoading || !geoJson) {
+		return (
+			<div
+				style={{ width, height }}
+				className='flex items-center justify-center text-sm text-muted-foreground'>
+				<p className='animate-pulse'>Loading global coordinates…</p>
 			</div>
 		);
 	}
