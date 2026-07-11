@@ -71,7 +71,8 @@ export const WorldMap = ({
 
 	const profilesByCountry = useMemo(() => {
 		return audience.reduce((acc, profile) => {
-			const regionalProfiles = acc.get(profile.country) || [];
+			const regionalProfiles = acc.get(profile.country) ?? [];
+			regionalProfiles.push(profile);
 			return acc.set(profile.country, regionalProfiles);
 		}, new Map<string, LocalizedGithubProfile[]>());
 	}, [audience]);
@@ -81,7 +82,7 @@ export const WorldMap = ({
 			<div
 				style={{ width, height }}
 				className='flex flex-col items-center justify-center gap-3 text-sm text-muted-foreground'>
-				<p>Couldn&apos;t load the world map.</p>
+				<p>Couldn't load the world map.</p>
 				<button
 					type='button'
 					onClick={setReloadKey}
@@ -141,22 +142,20 @@ export const WorldMap = ({
 								`${getCountryColor(country.id)}`
 							:	MAP_BASE_STYLING.defaultFill
 						}
-						stroke={MAP_BASE_STYLING.borderColor}
-						strokeWidth={MAP_BASE_STYLING.borderWidth}
-						className='cursor-pointer transition-all duration-200 hover:stroke-[1.25px] hover:brightness-110 focus:outline-none focus:stroke-[1.25px]'
-						onMouseEnter={(e) => {
-							(e.target as SVGPathElement).style.strokeWidth = "1.25";
-						}}
-						onMouseLeave={(e) => {
-							(e.target as SVGPathElement).style.strokeWidth = String(
-								MAP_BASE_STYLING.borderWidth
-							);
-						}}
+						className='cursor-pointer transition-all duration-100 hover:stroke-[1.75px] hover:brightness-110 focus:outline-none focus:stroke-[1.75px] stroke-[0.125px] stroke-slate-200'
+						tabIndex={0}
 						onClick={() => {
 							setCountry(country.id);
 						}}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								setCountry(country.id);
+							}
+						}}
 					/>
 				))}
+				)
 			</g>
 		</svg>
 	);
