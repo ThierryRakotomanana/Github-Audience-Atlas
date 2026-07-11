@@ -40,7 +40,7 @@ jobs:
           """
           body = json.dumps({"contents":[{"parts":[{"text": prompt}]}]}).encode()
           req = urllib.request.Request(
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={os.environ['GEMINI_API_KEY']}",
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={os.environ['GEMINI_API_KEY']}",
             data=body, headers={"Content-Type": "application/json"}
           )
           resp = json.loads(urllib.request.urlopen(req).read())
