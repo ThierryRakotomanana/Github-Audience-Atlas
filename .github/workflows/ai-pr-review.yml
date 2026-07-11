@@ -17,8 +17,11 @@ jobs:
           fetch-depth: 0
 
       - name: Get PR diff
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          git diff origin/${{ github.base_ref }}...origin/${{ github.head_ref }} > diff.txt
+          git diff "origin/$BASE_REF...origin/$HEAD_REF" > diff.txt
           # Guard against huge diffs blowing the free-tier context/rate limit
           head -c 20000 diff.txt > diff_trimmed.txt
 
