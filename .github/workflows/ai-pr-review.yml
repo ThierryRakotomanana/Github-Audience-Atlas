@@ -22,92 +22,215 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           git diff "$BASE_SHA...$HEAD_SHA" > diff.txt
-          head -c 200000 diff.txt > diff_trimmed.txt
+          head -c 800000 diff.txt > diff_trimmed.txt
 
       - name: Ask Gemini for a review
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python3 - <<'PYEOF'
-          import json, os, sys
+          import json, os, re, sys, time
           import urllib.error
           import urllib.request
+
+          MAX_DIFF_BYTES = 800_000
+
+          def write_outputs(status, summary, comments):
+              open("status.txt", "w").write(status)
+              open("review.md", "w").write(summary)
+              open("comments.json", "w").write(json.dumps(comments))
+
+          original_bytes = os.path.getsize("diff.txt")
+          truncated = original_bytes > MAX_DIFF_BYTES
 
           with open("diff_trimmed.txt", errors="replace") as f:
               diff = f.read()
 
           if not diff.strip():
-              open("review.md", "w").write("No significant issues found.")
+              write_outputs("clean", "No changes to review.", [])
               sys.exit(0)
+
+          def parse_commentable_lines(diff_text):
+              valid = {}
+              current_file, new_line = None, None
+              for line in diff_text.splitlines():
+                  if line.startswith("+++ "):
+                      raw = line[4:].strip()
+                      current_file = None if raw == "/dev/null" else raw[2:]  # strip "b/"
+                      if current_file:
+                          valid.setdefault(current_file, set())
+                      new_line = None
+                      continue
+                  m = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", line)
+                  if m:
+                      new_line = int(m.group(1))
+                      continue
+                  if current_file is None or new_line is None:
+                      continue
+                  if line.startswith("+"):
+                      valid[current_file].add(new_line)  # only new/added lines are offered
+                      new_line += 1
+                  elif line.startswith(" "):
+                      new_line += 1
+                  # lines starting with "-" don't advance the new-file counter
+              return valid
+
+          commentable = parse_commentable_lines(diff)
 
           prompt_text = """You are a senior software engineer reviewing a pull request diff for Audience Atlas, a React/TypeScript application that visualizes global GitHub audience data on a 3D D3.js globe using Shadcn UI and Tailwind CSS.
 
-          Focus your review strictly on the following areas:
-          1. Architecture & Logic: Catch bugs, security issues, missing error handling, and race conditions. Check for React/D3 lifecycle conflicts.
-          2. UI & Responsiveness: Verify Tailwind classes and flag Shadcn UI misuses.
-          3. UX & Information Density: Enforce a "less is more" approach for the GitHub audience data.
-          4. Maintainability: Identify structural problems. Ignore minor stylistic nits.
+          Focus strictly on:
+          1. Architecture & Logic: bugs, security issues, missing error handling, race conditions, React/D3 lifecycle conflicts.
+          2. UI & Responsiveness: Tailwind misuse, Shadcn UI misuse.
+          3. UX & Information Density: enforce "less is more" for the audience data views.
+          4. Maintainability: structural problems only, ignore minor style nits.
 
-          Comment Formatting Rules:
-          - ZERO emojis.
-          - Keep comments extremely brief, direct, and pragmatic.
-          - Use markdown bullet points.
-          - If nothing significant is wrong, output exactly: "No significant issues found."
-
-          DIFF:
+          Only flag lines that are actually part of the diff (added or modified lines). Reference the NEW file's line numbers.
+          Zero emojis. Be brief, direct, pragmatic.
+          If there is nothing significant, return status "clean" with an empty comments array.
           """ + diff
+
+          response_schema = {
+              "type": "OBJECT",
+              "properties": {
+                  "status": {"type": "STRING", "enum": ["clean", "issues_found"]},
+                  "summary": {"type": "STRING"},
+                  "comments": {
+                      "type": "ARRAY",
+                      "items": {
+                          "type": "OBJECT",
+                          "properties": {
+                              "file": {"type": "STRING"},
+                              "line": {"type": "INTEGER"},
+                              "severity": {"type": "STRING", "enum": ["high", "medium", "low"]},
+                              "comment": {"type": "STRING"},
+                          },
+                          "required": ["file", "line", "comment"],
+                      },
+                  },
+              },
+              "required": ["status", "summary", "comments"],
+          }
 
           req = urllib.request.Request(
               "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
-              data=json.dumps({"contents": [{"parts": [{"text": prompt_text}]}]}).encode(),
+              data=json.dumps({
+                  "contents": [{"parts": [{"text": prompt_text}]}],
+                  "generationConfig": {
+                      "responseMimeType": "application/json",
+                      "responseSchema": response_schema,
+                  },
+              }).encode(),
               headers={
                   "Content-Type": "application/json",
                   "x-goog-api-key": os.environ["GEMINI_API_KEY"],
               },
           )
 
+          def call_with_retries(request, max_attempts=3, base_delay=2):
+              last_err = None
+              for attempt in range(1, max_attempts + 1):
+                  try:
+                      with urllib.request.urlopen(request, timeout=60) as resp:
+                          return json.loads(resp.read())
+                  except urllib.error.HTTPError as e:
+                      last_err = e
+                      if e.code in (429, 500, 502, 503, 504) and attempt < max_attempts:
+                          time.sleep(base_delay * attempt)
+                          continue
+                      raise
+                  except urllib.error.URLError as e:
+                      last_err = e
+                      if attempt < max_attempts:
+                          time.sleep(base_delay * attempt)
+                          continue
+                      raise
+              raise last_err
+
           try:
-              with urllib.request.urlopen(req, timeout=60) as resp:
-                  payload = json.loads(resp.read())
+              payload = call_with_retries(req)
 
               candidates = payload.get("candidates") or []
               if not candidates:
                   reason = payload.get("promptFeedback", {}).get("blockReason", "unknown")
                   raise ValueError(f"no candidates returned (blockReason={reason})")
+              if "content" not in candidates[0] or "parts" not in candidates[0]["content"]:
+                  raise ValueError("response missing content/parts")
 
-              text = candidates[0]["content"]["parts"][0]["text"]
+              raw_text = candidates[0]["content"]["parts"][0].get("text", "").strip()
+              raw_text = re.sub(r"^```json\s*|\s*```$", "", raw_text)  # in case it wraps anyway
+              parsed = json.loads(raw_text)
+
+              status = parsed.get("status", "issues_found")
+              summary = parsed.get("summary", "").strip() or "Review complete."
+              raw_comments = parsed.get("comments", [])
+
+              safe_comments = []
+              for c in raw_comments:
+                  f, ln = c.get("file"), c.get("line")
+                  if f in commentable and ln in commentable[f]:
+                      severity = c.get("severity", "medium").upper()
+                      safe_comments.append({
+                          "path": f,
+                          "line": ln,
+                          "side": "RIGHT",
+                          "body": f"**[{severity}]** {c.get('comment', '').strip()}",
+                      })
+
+              if truncated:
+                  summary = (
+                      f"Note: diff exceeded {MAX_DIFF_BYTES // 1000}KB and was truncated — "
+                      f"this review may not cover the full PR.\n\n" + summary
+                  )
+
+              write_outputs(status, summary, safe_comments)
 
           except urllib.error.HTTPError as e:
               detail = e.read().decode(errors="replace")[:500]
               print(f"::warning::Gemini API HTTP {e.code}: {detail}", file=sys.stderr)
-              text = f"AI review skipped: Gemini API returned HTTP {e.code}. Check the Actions log for details."
+              write_outputs("skipped", f"AI review skipped: Gemini API returned HTTP {e.code}.", [])
 
           except urllib.error.URLError as e:
               print(f"::warning::Gemini API network error: {e}", file=sys.stderr)
-              text = f"AI review skipped: network error contacting Gemini API ({e.reason})."
+              write_outputs("skipped", f"AI review skipped: network error contacting Gemini API ({e.reason}).", [])
 
           except (KeyError, IndexError, ValueError, json.JSONDecodeError) as e:
               print(f"::warning::Gemini API unexpected response: {e}", file=sys.stderr)
-              text = f"AI review skipped: unexpected response from Gemini API ({e})."
-
-          open("review.md", "w").write(text)
+              write_outputs("skipped", f"AI review skipped: unexpected response from Gemini API ({e}).", [])
           PYEOF
 
-      - name: Submit Formal PR Review
+      - name: Submit PR Review
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const body = fs.readFileSync('review.md', 'utf8');
 
-            const noIssues = body.startsWith('No significant issues found');
-            const skipped = body.startsWith('AI review skipped');
-            const reviewEvent = (noIssues || skipped) ? 'COMMENT' : 'REQUEST_CHANGES';
+            const status = fs.readFileSync('status.txt', 'utf8').trim();
+            const summary = fs.readFileSync('review.md', 'utf8');
+            let comments = [];
+            try {
+              comments = JSON.parse(fs.readFileSync('comments.json', 'utf8'));
+            } catch (e) {
+              comments = [];
+            }
 
-            await github.rest.pulls.createReview({
+            const reviewEvent = (status === 'issues_found' && comments.length > 0)
+              ? 'REQUEST_CHANGES'
+              : 'COMMENT';
+
+            const base = {
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number,
-              body: body,
-              event: reviewEvent
-            });
+              event: reviewEvent,
+            };
+
+            try {
+              await github.rest.pulls.createReview({ ...base, body: summary, comments });
+            } catch (e) {
+              core.warning(`Inline comments rejected (${e.message}); falling back to summary only.`);
+              await github.rest.pulls.createReview({
+                ...base,
+                body: summary + '\n\n_Some inline comments could not be posted._',
+              });
+            }
