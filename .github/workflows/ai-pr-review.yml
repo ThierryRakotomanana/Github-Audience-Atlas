@@ -18,10 +18,10 @@ jobs:
 
       - name: Get PR diff
         env:
-          BASE_REF: ${{ github.base_ref }}
-          HEAD_REF: ${{ github.head_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          git diff "origin/$BASE_REF...origin/$HEAD_REF" > diff.txt
+          git diff "$BASE_SHA...$HEAD_SHA" > diff.txt
           head -c 200000 diff.txt > diff_trimmed.txt
 
       - name: Ask Gemini for a review
@@ -29,10 +29,16 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python3 - <<'PYEOF'
-          import os, json, urllib.request
+          import json, os, sys
+          import urllib.error
+          import urllib.request
 
           with open("diff_trimmed.txt", errors="replace") as f:
               diff = f.read()
+
+          if not diff.strip():
+              open("review.md", "w").write("No significant issues found.")
+              sys.exit(0)
 
           prompt_text = """You are a senior software engineer reviewing a pull request diff for Audience Atlas, a React/TypeScript application that visualizes global GitHub audience data on a 3D D3.js globe using Shadcn UI and Tailwind CSS.
 
@@ -51,17 +57,39 @@ jobs:
           DIFF:
           """ + diff
 
-          body = json.dumps({"contents":[{"parts":[{"text": prompt_text}]}]}).encode()
           req = urllib.request.Request(
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
-            data=body,
-            headers={ 
-              "Content-Type": "application/json",
-              "x-goog-api-key": os.environ['GEMINI_API_KEY']
-            }
+              "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+              data=json.dumps({"contents": [{"parts": [{"text": prompt_text}]}]}).encode(),
+              headers={
+                  "Content-Type": "application/json",
+                  "x-goog-api-key": os.environ["GEMINI_API_KEY"],
+              },
           )
-          resp = json.loads(urllib.request.urlopen(req).read())
-          text = resp["candidates"][0]["content"]["parts"][0]["text"]
+
+          try:
+              with urllib.request.urlopen(req, timeout=60) as resp:
+                  payload = json.loads(resp.read())
+
+              candidates = payload.get("candidates") or []
+              if not candidates:
+                  reason = payload.get("promptFeedback", {}).get("blockReason", "unknown")
+                  raise ValueError(f"no candidates returned (blockReason={reason})")
+
+              text = candidates[0]["content"]["parts"][0]["text"]
+
+          except urllib.error.HTTPError as e:
+              detail = e.read().decode(errors="replace")[:500]
+              print(f"::warning::Gemini API HTTP {e.code}: {detail}", file=sys.stderr)
+              text = f"AI review skipped: Gemini API returned HTTP {e.code}. Check the Actions log for details."
+
+          except urllib.error.URLError as e:
+              print(f"::warning::Gemini API network error: {e}", file=sys.stderr)
+              text = f"AI review skipped: network error contacting Gemini API ({e.reason})."
+
+          except (KeyError, IndexError, ValueError, json.JSONDecodeError) as e:
+              print(f"::warning::Gemini API unexpected response: {e}", file=sys.stderr)
+              text = f"AI review skipped: unexpected response from Gemini API ({e})."
+
           open("review.md", "w").write(text)
           PYEOF
 
@@ -72,10 +100,9 @@ jobs:
             const fs = require('fs');
             const body = fs.readFileSync('review.md', 'utf8');
 
-            let reviewEvent = 'REQUEST_CHANGES';
-            if (body.includes('No significant issues found.')) {
-              reviewEvent = 'COMMENT';
-            }
+            const noIssues = body.startsWith('No significant issues found');
+            const skipped = body.startsWith('AI review skipped');
+            const reviewEvent = (noIssues || skipped) ? 'COMMENT' : 'REQUEST_CHANGES';
 
             await github.rest.pulls.createReview({
               owner: context.repo.owner,
