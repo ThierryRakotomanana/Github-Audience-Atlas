@@ -43,8 +43,12 @@ jobs:
           """
           body = json.dumps({"contents":[{"parts":[{"text": prompt}]}]}).encode()
           req = urllib.request.Request(
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={os.environ['GEMINI_API_KEY']}",
-            data=body, headers={"Content-Type": "application/json"}
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+            data=body,
+            headers={ 
+              "Content-Type": "application/json",
+              "x-goog-api-key": os.environ['GEMINI_API_KEY']
+            }
           )
           resp = json.loads(urllib.request.urlopen(req).read())
           text = resp["candidates"][0]["content"]["parts"][0]["text"]
