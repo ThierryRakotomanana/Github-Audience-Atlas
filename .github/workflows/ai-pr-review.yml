@@ -48,15 +48,24 @@ jobs:
           open("review.md", "w").write(text)
           PYEOF
 
-      - name: Post review as PR comment
+      - name: Submit Formal PR Review
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             const body = fs.readFileSync('review.md', 'utf8');
-            github.rest.issues.createComment({
+
+            let reviewEvent = 'COMMENT';
+            if (body.includes('No significant issues found.')) {
+              reviewEvent = 'APPROVE';
+            } else {
+              reviewEvent = 'REQUEST_CHANGES'; 
+            }
+
+            await github.rest.pulls.createReview({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: `## 🤖 AI Review (advisory, not a blocker)\n\n${body}`
+              pull_number: context.issue.number,
+              body: body,
+              event: reviewEvent
             });
