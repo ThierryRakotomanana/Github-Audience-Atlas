@@ -1,7 +1,7 @@
 import { useGeoJson } from "@/hooks/useGeoJson";
 import { getCountryColor, MAP_BASE_STYLING } from "@/lib/getCountryColor";
 import type { LocalizedGithubProfile } from "@/types/api.types";
-import * as d3 from "d3";
+import { geoNaturalEarth1, geoPath, geoGraticule } from "d3-geo";
 import type { Geometry } from "geojson";
 import { useMemo } from "react";
 
@@ -45,15 +45,15 @@ export const WorldMap = ({
 	} = useGeoJson<WorldGeoJson>(url);
 
 	const projection = useMemo(() => {
-		return d3.geoNaturalEarth1().fitSize([width, height], { type: "Sphere" });
+		return geoNaturalEarth1().fitSize([width, height], { type: "Sphere" });
 	}, [width, height]);
 
 	const pathGenerator = useMemo(() => {
-		return d3.geoPath().projection(projection);
+		return geoPath().projection(projection);
 	}, [projection]);
 
 	const graticulePath = useMemo(() => {
-		const graticule = d3.geoGraticule();
+		const graticule = geoGraticule();
 		return pathGenerator(graticule()) || "";
 	}, [pathGenerator]);
 
