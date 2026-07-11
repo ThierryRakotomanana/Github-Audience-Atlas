@@ -22,8 +22,7 @@ jobs:
           HEAD_REF: ${{ github.head_ref }}
         run: |
           git diff "origin/$BASE_REF...origin/$HEAD_REF" > diff.txt
-          # Guard against huge diffs blowing the free-tier context/rate limit
-          head -c 20000 diff.txt > diff_trimmed.txt
+          head -c 200000 diff.txt > diff_trimmed.txt
 
       - name: Ask Gemini for a review
         env:
@@ -35,15 +34,24 @@ jobs:
           with open("diff_trimmed.txt", errors="replace") as f:
               diff = f.read()
 
-          prompt = f"""You are a senior software engineer reviewing a pull request diff.
-          Focus only on: bugs, security issues, race conditions, missing error handling,
-          and clear maintainability problems. Ignore style nits a linter would catch.
-          If nothing significant is wrong, say so briefly. Use markdown bullet points.
+          prompt_text = """You are a senior software engineer reviewing a pull request diff for Audience Atlas, a React/TypeScript application that visualizes global GitHub audience data on a 3D D3.js globe using Shadcn UI and Tailwind CSS.
+
+          Focus your review strictly on the following areas:
+          1. Architecture & Logic: Catch bugs, security issues, missing error handling, and race conditions. Check for React/D3 lifecycle conflicts.
+          2. UI & Responsiveness: Verify Tailwind classes and flag Shadcn UI misuses.
+          3. UX & Information Density: Enforce a "less is more" approach for the GitHub audience data.
+          4. Maintainability: Identify structural problems. Ignore minor stylistic nits.
+
+          Comment Formatting Rules:
+          - ZERO emojis.
+          - Keep comments extremely brief, direct, and pragmatic.
+          - Use markdown bullet points.
+          - If nothing significant is wrong, output exactly: "No significant issues found."
 
           DIFF:
-          {diff}
-          """
-          body = json.dumps({"contents":[{"parts":[{"text": prompt}]}]}).encode()
+          """ + diff
+
+          body = json.dumps({"contents":[{"parts":[{"text": prompt_text}]}]}).encode()
           req = urllib.request.Request(
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
             data=body,
@@ -64,11 +72,9 @@ jobs:
             const fs = require('fs');
             const body = fs.readFileSync('review.md', 'utf8');
 
-            let reviewEvent = 'COMMENT';
+            let reviewEvent = 'REQUEST_CHANGES';
             if (body.includes('No significant issues found.')) {
-              reviewEvent = 'APPROVE';
-            } else {
-              reviewEvent = 'REQUEST_CHANGES'; 
+              reviewEvent = 'COMMENT';
             }
 
             await github.rest.pulls.createReview({
