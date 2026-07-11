@@ -32,7 +32,9 @@ jobs:
           python3 - <<'PYEOF'
           import os, json, urllib.request
 
-          diff = open("diff_trimmed.txt").read()
+          with open("diff_trimmed.txt", errors="replace") as f:
+              diff = f.read()
+
           prompt = f"""You are a senior software engineer reviewing a pull request diff.
           Focus only on: bugs, security issues, race conditions, missing error handling,
           and clear maintainability problems. Ignore style nits a linter would catch.
