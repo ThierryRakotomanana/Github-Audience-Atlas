@@ -1,0 +1,113 @@
+name: AI PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git diff "$BASE_SHA...$HEAD_SHA" > diff.txt
+          head -c 200000 diff.txt > diff_trimmed.txt
+
+      - name: Ask Gemini for a review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, sys
+          import urllib.error
+          import urllib.request
+
+          with open("diff_trimmed.txt", errors="replace") as f:
+              diff = f.read()
+
+          if not diff.strip():
+              open("review.md", "w").write("No significant issues found.")
+              sys.exit(0)
+
+          prompt_text = """You are a senior software engineer reviewing a pull request diff for Audience Atlas, a React/TypeScript application that visualizes global GitHub audience data on a 3D D3.js globe using Shadcn UI and Tailwind CSS.
+
+          Focus your review strictly on the following areas:
+          1. Architecture & Logic: Catch bugs, security issues, missing error handling, and race conditions. Check for React/D3 lifecycle conflicts.
+          2. UI & Responsiveness: Verify Tailwind classes and flag Shadcn UI misuses.
+          3. UX & Information Density: Enforce a "less is more" approach for the GitHub audience data.
+          4. Maintainability: Identify structural problems. Ignore minor stylistic nits.
+
+          Comment Formatting Rules:
+          - ZERO emojis.
+          - Keep comments extremely brief, direct, and pragmatic.
+          - Use markdown bullet points.
+          - If nothing significant is wrong, output exactly: "No significant issues found."
+
+          DIFF:
+          """ + diff
+
+          req = urllib.request.Request(
+              "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+              data=json.dumps({"contents": [{"parts": [{"text": prompt_text}]}]}).encode(),
+              headers={
+                  "Content-Type": "application/json",
+                  "x-goog-api-key": os.environ["GEMINI_API_KEY"],
+              },
+          )
+
+          try:
+              with urllib.request.urlopen(req, timeout=60) as resp:
+                  payload = json.loads(resp.read())
+
+              candidates = payload.get("candidates") or []
+              if not candidates:
+                  reason = payload.get("promptFeedback", {}).get("blockReason", "unknown")
+                  raise ValueError(f"no candidates returned (blockReason={reason})")
+
+              text = candidates[0]["content"]["parts"][0]["text"]
+
+          except urllib.error.HTTPError as e:
+              detail = e.read().decode(errors="replace")[:500]
+              print(f"::warning::Gemini API HTTP {e.code}: {detail}", file=sys.stderr)
+              text = f"AI review skipped: Gemini API returned HTTP {e.code}. Check the Actions log for details."
+
+          except urllib.error.URLError as e:
+              print(f"::warning::Gemini API network error: {e}", file=sys.stderr)
+              text = f"AI review skipped: network error contacting Gemini API ({e.reason})."
+
+          except (KeyError, IndexError, ValueError, json.JSONDecodeError) as e:
+              print(f"::warning::Gemini API unexpected response: {e}", file=sys.stderr)
+              text = f"AI review skipped: unexpected response from Gemini API ({e})."
+
+          open("review.md", "w").write(text)
+          PYEOF
+
+      - name: Submit Formal PR Review
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('review.md', 'utf8');
+
+            const noIssues = body.startsWith('No significant issues found');
+            const skipped = body.startsWith('AI review skipped');
+            const reviewEvent = (noIssues || skipped) ? 'COMMENT' : 'REQUEST_CHANGES';
+
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              body: body,
+              event: reviewEvent
+            });
