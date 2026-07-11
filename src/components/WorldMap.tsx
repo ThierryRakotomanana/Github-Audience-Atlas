@@ -143,7 +143,7 @@ export const WorldMap = ({
 						}
 						stroke={MAP_BASE_STYLING.borderColor}
 						strokeWidth={MAP_BASE_STYLING.borderWidth}
-						style={{ transition: "all 0.2s ease" }}
+						className='cursor-pointer transition-all duration-200 hover:stroke-[1.25px] hover:brightness-110 focus:outline-none focus:stroke-[1.25px]'
 						onMouseEnter={(e) => {
 							(e.target as SVGPathElement).style.strokeWidth = "1.25";
 						}}
