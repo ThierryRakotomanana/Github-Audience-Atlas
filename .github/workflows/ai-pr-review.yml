@@ -146,7 +146,10 @@ jobs:
               ):
                   comments.append({"path": path.strip(), "line": int(line), "body": cbody.strip()})
 
-              status = "clean" if text.startswith("No significant issues found") else "issues"
+              # Bounded, case-insensitive: robust to stray formatting/casing without
+              # risking a false "clean" when the phrase shows up mid-review instead.
+              lead = text[:80].lower()
+              status = "clean" if "no significant issues found" in lead else "issues"
 
               open("status.txt", "w").write(status)
               open("review.md", "w").write(text)
@@ -163,7 +166,7 @@ jobs:
           PYEOF
 
       - name: Submit review
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -179,15 +182,35 @@ jobs:
             }
 
             if (comments.length > 0) {
-              const { data: files } = await github.rest.pulls.listFiles({
+              const files = await github.paginate(github.rest.pulls.listFiles, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: context.issue.number,
                 per_page: 100,
               });
-              const changedPaths = new Set(files.map(f => f.filename));
+
+              // Which (file, line) pairs GitHub will actually accept a comment on,
+              // read straight off the patch data we already fetched.
+              const validLines = new Map();
+              for (const f of files) {
+                const lines = new Set();
+                if (f.patch) {
+                  let newLine = null;
+                  for (const row of f.patch.split('\n')) {
+                    const hunk = row.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+                    if (hunk) { newLine = parseInt(hunk[1], 10); continue; }
+                    if (newLine === null) continue;
+                    if (row.startsWith('+') || row.startsWith(' ')) {
+                      lines.add(newLine);
+                      newLine++;
+                    }
+                  }
+                }
+                validLines.set(f.filename, lines);
+              }
+
               comments = comments
-                .filter(c => changedPaths.has(c.path))
+                .filter(c => validLines.get(c.path)?.has(c.line))
                 .map(c => ({ path: c.path, line: c.line, side: 'RIGHT', body: c.body }));
             }
 
