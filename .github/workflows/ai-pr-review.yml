@@ -2,7 +2,11 @@ name: AI PR Review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -10,11 +14,14 @@ permissions:
 
 jobs:
   ai-review:
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Get PR diff
         env:
@@ -22,10 +29,9 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           git diff "$BASE_SHA...$HEAD_SHA" > diff.txt
-          wc -c < diff.txt > diff_size.txt
           head -c 800000 diff.txt > diff_trimmed.txt
 
-      - name: Ask Gemini for full review
+      - name: Ask Gemini for a review
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
@@ -36,52 +42,65 @@ jobs:
 
           MAX_DIFF_BYTES = 800_000
 
+          with open("diff.txt", "rb") as f:
+              original_size = len(f.read())
+
           with open("diff_trimmed.txt", errors="replace") as f:
               diff = f.read()
 
-          with open("diff_size.txt") as f:
-              original_size = int(f.read().strip())
-
-          truncated_notice = ""
-          if original_size > MAX_DIFF_BYTES:
-              truncated_notice = (
-                  f"\n⚠️ **Note:** Diff exceeded {MAX_DIFF_BYTES // 1000}KB and was truncated. "
-                  f"This review may not cover the full PR.\n"
-              )
-
           if not diff.strip():
+              open("status.txt", "w").write("clean")
               open("review.md", "w").write("No changes to review.")
               open("inline_comments.json", "w").write(json.dumps({"comments": []}))
               sys.exit(0)
 
-          prompt_text = f"""You are a senior software engineer reviewing a pull request diff for Audience Atlas, a React/TypeScript application that visualizes global GitHub audience data on a 3D D3.js globe using Shadcn UI and Tailwind CSS.
+          truncated_notice = ""
+          if original_size > MAX_DIFF_BYTES:
+              truncated_notice = (
+                  f"Note: diff exceeded {MAX_DIFF_BYTES // 1000}KB and was truncated; "
+                  "this review may not cover the full PR.\n\n"
+              )
 
-          Focus strictly on:
-          1. Architecture & Logic: bugs, security issues, missing error handling, race conditions, React/D3 lifecycle conflicts, hooks misuse, state management patterns
-          2. UI & Responsiveness: Tailwind misuse, Shadcn UI misuse, responsive design issues
-          3. UX & Information Density: enforce "less is more" for audience data views
-          4. Maintainability: structural problems, component organization, naming clarity
-          5. Syntax & Type Safety: TypeScript errors, missing types, Promise handling
+          prompt_text = (
+              "You are a senior software engineer reviewing a pull request diff for "
+              "Audience Atlas, a React/TypeScript application that visualizes global "
+              "GitHub audience data on a 3D D3.js globe using Shadcn UI and Tailwind CSS.\n\n"
+              "Focus strictly on:\n"
+              "1. Architecture & Logic: bugs, security issues, missing error handling, "
+              "race conditions, React/D3 lifecycle conflicts, hooks misuse, state management.\n"
+              "2. UI & Responsiveness: Tailwind misuse, Shadcn UI misuse, responsive issues.\n"
+              "3. UX & Information Density: enforce \"less is more\" for the audience data views.\n"
+              "4. Maintainability: structural problems, component organization, naming clarity.\n"
+              "5. Syntax & Type Safety: TypeScript errors, missing types, unhandled promises.\n\n"
+              "Include every finding you have, however small. Do not filter for brevity.\n"
+              "For an issue tied to one exact line, put it on its own single line formatted "
+              "as: **[FILE:LINE]** - description. Use the NEW file's line numbers (the "
+              "right-hand side of the diff — added or unchanged context lines), never the "
+              "old file's numbers.\n"
+              "For architectural or cross-cutting issues that don't belong to one line, "
+              "describe them in their own section instead of forcing a line number.\n"
+              "No emojis. Be direct and concise.\n\n"
+              "If there is truly nothing significant, respond with exactly: "
+              "\"No significant issues found.\"\n\n"
+              + truncated_notice +
+              "DIFF:\n" + diff
+          )
 
-          Include ALL findings. Be specific and direct. Use markdown.
-          For issues tied to specific lines, format as: **[FILE:LINE]** - Issue description
-          For architectural/pattern issues that don't anchor to one line, describe them separately.
-          Zero emojis. Brief, pragmatic.
+          payload = {
+              "contents": [{"parts": [{"text": prompt_text}]}],
+              "generationConfig": {
+                  "temperature": 0.2,
+                  "maxOutputTokens": 8192,
+              },
+          }
 
-          If nothing significant is wrong, start with: "✅ No significant issues found."
-          {truncated_notice}
-
-          DIFF:
-          {diff}"""
-
-          body = json.dumps({{"contents": [{{"parts": [{{"text": prompt_text}}]}}]}}).encode()
           req = urllib.request.Request(
               "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
-              data=body,
-              headers={{
+              data=json.dumps(payload).encode(),
+              headers={
                   "Content-Type": "application/json",
                   "x-goog-api-key": os.environ["GEMINI_API_KEY"],
-              }},
+              },
           )
 
           def call_with_retries(request, max_attempts=3, base_delay=2):
@@ -104,126 +123,88 @@ jobs:
                       raise
               raise last_err
 
+          def fail(message):
+              open("status.txt", "w").write("error")
+              open("review.md", "w").write(f"AI review skipped: {message}")
+              open("inline_comments.json", "w").write(json.dumps({"comments": []}))
+
           try:
-              payload = call_with_retries(req)
-
-              candidates = payload.get("candidates") or []
+              result = call_with_retries(req)
+              candidates = result.get("candidates") or []
               if not candidates:
-                  reason = payload.get("promptFeedback", {{}}).get("blockReason", "unknown")
+                  reason = result.get("promptFeedback", {}).get("blockReason", "unknown")
                   raise ValueError(f"no candidates returned (blockReason={reason})")
-              if "content" not in candidates[0] or "parts" not in candidates[0]["content"]:
-                  raise ValueError("response missing content/parts")
 
-              full_text = candidates[0]["content"]["parts"][0].get("text", "").strip()
-              if not full_text:
-                  raise ValueError("empty response from Gemini")
+              parts = candidates[0].get("content", {}).get("parts", [])
+              text = (parts[0].get("text", "") if parts else "").strip()
+              if not text:
+                  raise ValueError("empty response text")
 
-              # Extract line-anchored findings for inline comments
-              # Pattern: **[FILE:LINE]** - description
-              inline_comments = []
-              pattern = r'\*\*\[([^:\]]+):(\d+)\]\*\*\s*-\s*([^\n]+)'
-              for match in re.finditer(pattern, full_text):
-                  path, line_str, comment = match.groups()
-                  inline_comments.append({{
-                      "path": path.strip(),
-                      "line": int(line_str),
-                      "body": comment.strip()
-                  }})
+              comments = []
+              for path, line, cbody in re.findall(
+                  r'\*\*\[([^:\]\n]+):(\d+)\]\*\*\s*-\s*([^\n]+)', text
+              ):
+                  comments.append({"path": path.strip(), "line": int(line), "body": cbody.strip()})
 
-              open("review.md", "w").write(full_text)
-              open("inline_comments.json", "w").write(json.dumps({{"comments": inline_comments}}))
+              status = "clean" if text.startswith("No significant issues found") else "issues"
+
+              open("status.txt", "w").write(status)
+              open("review.md", "w").write(text)
+              open("inline_comments.json", "w").write(json.dumps({"comments": comments}))
 
           except urllib.error.HTTPError as e:
-              detail = e.read().decode(errors="replace")[:500]
-              print(f"::warning::Gemini API HTTP {e.code}: {detail}", file=sys.stderr)
-              fallback = f"⚠️ AI review skipped: Gemini API returned HTTP {e.code}. Check the Actions log for details."
-              open("review.md", "w").write(fallback)
-              open("inline_comments.json", "w").write(json.dumps({{"comments": []}}))
+              detail = e.read().decode(errors="replace")[:300]
+              print(f"::warning::Gemini HTTP {e.code}: {detail}", file=sys.stderr)
+              fail(f"Gemini API returned HTTP {e.code}. See the Actions log for details.")
 
           except (urllib.error.URLError, KeyError, IndexError, ValueError, json.JSONDecodeError) as e:
-              print(f"::warning::Gemini API error: {e}", file=sys.stderr)
-              fallback = f"⚠️ AI review skipped: unexpected error ({e}). Please review manually."
-              open("review.md", "w").write(fallback)
-              open("inline_comments.json", "w").write(json.dumps({{"comments": []}}))
+              print(f"::warning::Gemini call failed: {e}", file=sys.stderr)
+              fail(f"unexpected error contacting/parsing Gemini response ({e}).")
           PYEOF
 
-      - name: Post inline comments (if any)
-        uses: actions/github-script@v7
+      - name: Submit review
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
 
-            let inlineData = { comments: [] };
-            try {
-              inlineData = JSON.parse(fs.readFileSync('inline_comments.json', 'utf8'));
-            } catch (e) {
-              console.log('No inline comments to post');
-            }
-
-            const prFiles = await github.rest.pulls.listFiles({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-              per_page: 100  
-            });
-
-            const changedFiles = new Map();
-            prFiles.data.forEach(file => {
-              changedFiles.set(file.filename, file);
-            });
-
-            let postedCount = 0;
-            for (const comment of inlineData.comments) {
-              if (changedFiles.has(comment.path)) {
-                try {
-                  await github.rest.pulls.createReviewComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    pull_number: context.issue.number,
-                    body: comment.body,
-                    commit_id: context.payload.pull_request.head.sha,
-                    path: comment.path,
-                    line: comment.line,
-                    side: 'RIGHT'
-                  });
-                  postedCount++;
-                } catch (error) {
-                  console.log(`Skipped inline comment on ${comment.path}:${comment.line} - ${error.message}`);
-                }
-              }
-            }
-
-            console.log(`Posted ${postedCount} inline comments`);
-            core.setOutput('inline_comment_count', postedCount);
-
-      - name: Post review summary
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
+            const status = fs.readFileSync('status.txt', 'utf8').trim();
             const summary = fs.readFileSync('review.md', 'utf8');
-            const inlineCount = ${{ steps['Post inline comments (if any)'].outputs.inline_comment_count || '0' }};
 
-            let reviewEvent = 'COMMENT';
-            let reviewBody = summary;
-
-            if (summary.includes('✅ No significant issues found.')) {
-              reviewEvent = 'COMMENT';
-              reviewBody = `✅ **AI Review**: No significant issues found.`;
-            } else if (summary.length > 100 && !summary.includes('skipped')) {
-              reviewEvent = 'REQUEST_CHANGES';
-              reviewBody = `⚠️ **AI Review**: Findings require attention. See details and inline comments below.\n\n${summary}`;
+            let comments = [];
+            try {
+              comments = JSON.parse(fs.readFileSync('inline_comments.json', 'utf8')).comments || [];
+            } catch (e) {
+              comments = [];
             }
 
-            try {
-              await github.rest.pulls.createReview({
+            if (comments.length > 0) {
+              const { data: files } = await github.rest.pulls.listFiles({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: context.issue.number,
-                body: reviewBody,
-                event: reviewEvent
+                per_page: 100,
               });
-              console.log(`Review submitted as ${reviewEvent}`);
-            } catch (error) {
-              console.log(`Warning: Could not submit review - ${error.message}`);
+              const changedPaths = new Set(files.map(f => f.filename));
+              comments = comments
+                .filter(c => changedPaths.has(c.path))
+                .map(c => ({ path: c.path, line: c.line, side: 'RIGHT', body: c.body }));
+            }
+
+            const event = status === 'issues' ? 'REQUEST_CHANGES' : 'COMMENT';
+            const base = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              event,
+            };
+
+            try {
+              await github.rest.pulls.createReview({ ...base, body: summary, comments });
+            } catch (e) {
+              core.warning(`Review with inline comments failed (${e.message}); retrying without them.`);
+              await github.rest.pulls.createReview({
+                ...base,
+                body: summary + '\n\n_Some inline comments could not be attached and are omitted._',
+              });
             }
