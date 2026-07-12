@@ -2,6 +2,9 @@
 
 Visualize your GitHub network on a global scale. This tool generates an interactive world map to show the geographic distribution of your followers, the people you follow, and the "ghosts" in your network.
 
+
+<img alt="GitHub Audience Map Preview" width="1200" height="600" alt="Screenshot from 2026-07-12 19-02-23" src="https://github.com/user-attachments/assets/e326df02-47ee-470d-977d-694c95fac066" />
+
 ## Features
 
 Currently in **v1**, the map visualizes three distinct network categories:
@@ -18,8 +21,8 @@ To use this tool, you need a GitHub Personal Access Token (PAT).
 
 1. Go to your GitHub **Settings** > **Developer Settings** > **Personal access tokens**.
 2. Generate a new token with the following scopes:
-   - `read:user`
-   - `user:read` (to access profile and follower data)
+      - `read:user`
+      - `user:read` (to access profile and follower data)
 
 ### Usage
 
