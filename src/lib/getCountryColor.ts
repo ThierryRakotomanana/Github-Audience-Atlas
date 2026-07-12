@@ -182,8 +182,6 @@ export const MAP_BASE_STYLING = {
 	spaceBackground: "#030508",
 	oceanBackground: "#0B0F19",
 	defaultFill: "#1E1E24",
-	borderColor: "#FFFFFF",
-	borderWidth: 0.125,
 	highlightFill: "#00E5FF"
 };
 
