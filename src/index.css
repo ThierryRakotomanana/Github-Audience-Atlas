@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -18,19 +21,26 @@
 	--color-accent-foreground: var(--accent-foreground);
 	--color-destructive: var(--destructive);
 	--color-destructive-foreground: var(--destructive-foreground);
-
+	--color-success: var(--success);
+	--color-success-foreground: var(--success-foreground);
+	--color-warning: var(--warning);
+	--color-warning-foreground: var(--warning-foreground);
 	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);
 
-	/* Charts */
 	--color-chart-1: var(--chart-1);
 	--color-chart-2: var(--chart-2);
 	--color-chart-3: var(--chart-3);
 	--color-chart-4: var(--chart-4);
 	--color-chart-5: var(--chart-5);
 
-	/* Sidebar */
+	--color-audience-followers: var(--chart-1);
+	--color-audience-contributors: var(--chart-2);
+	--color-audience-stargazers: var(--chart-3);
+	--color-audience-organizations: var(--chart-4);
+	--color-audience-forks: var(--chart-5);
+
 	--color-sidebar: var(--sidebar);
 	--color-sidebar-foreground: var(--sidebar-foreground);
 	--color-sidebar-primary: var(--sidebar-primary);
@@ -40,369 +50,78 @@
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-ring: var(--sidebar-ring);
 
-	/* Audience Atlas brand colours */
-	--color-atlas-blue: var(--atlas-blue);
-	--color-atlas-purple: var(--atlas-purple);
-	--color-atlas-emerald: var(--atlas-emerald);
-	--color-atlas-amber: var(--atlas-amber);
-	--color-atlas-ghost-bg: var(--atlas-ghost-bg);
-	--color-atlas-ghost-border: var(--atlas-ghost-border);
-	--color-atlas-ghost-text: var(--atlas-ghost-text);
-	--color-atlas-orbit: var(--atlas-orbit);
+	--color-map-water: var(--map-water);
+	--color-map-land: var(--map-land);
+	--color-map-graticule: var(--map-graticule);
 
-	/* Border-radius scale */
-	--radius-sm: calc(var(--radius) - 4px);
-	--radius-md: calc(var(--radius) - 2px);
+	--radius-sm: calc(var(--radius) * 0.6);
+	--radius-md: calc(var(--radius) * 0.8);
 	--radius-lg: var(--radius);
-	--radius-xl: calc(var(--radius) + 4px);
-	--radius-2xl: calc(var(--radius) + 8px);
-
-	/* Font families */
-	--font-sans: "Syne", system-ui, sans-serif;
-	--font-mono: "JetBrains Mono", "Fira Code", monospace;
-
-	/* Animation durations (used by tw-animate-css / shadcn) */
-	--animate-accordion-down: accordion-down 0.2s ease-out;
-	--animate-accordion-up: accordion-up 0.2s ease-out;
+	--radius-xl: calc(var(--radius) * 1.4);
+	--radius-2xl: calc(var(--radius) * 1.8);
+	--radius-3xl: calc(var(--radius) * 2.2);
+	--radius-4xl: calc(var(--radius) * 2.6);
+	--signal: 142 71% 45%;
+	--signal-warm: 36 100% 66%;
 }
 
 :root {
-	/* Base radius token */
-	--radius: 0.625rem; /* 10px — matches the app's borderRadius:10 */
+	color-scheme: dark;
+	--radius: 0.5rem;
 
-	/*  shadcn core tokens  */
-	--background: oklch(0.97 0.014 255); /* #f0f4fc */
-	--foreground: oklch(0.16 0.033 256); /* #0f172a */
+	--background: oklch(0.15 0.02 256);
+	--sidebar: oklch(0.175 0.02 256);
+	--card: oklch(0.205 0.02 256);
+	--popover: oklch(0.195 0.02 256);
 
-	--card: oklch(1 0 0); /* #ffffff */
-	--card-foreground: oklch(0.16 0.033 256);
+	--foreground: oklch(0.97 0.006 256);
+	--card-foreground: oklch(0.97 0.006 256);
+	--popover-foreground: oklch(0.97 0.006 256);
+	--sidebar-foreground: oklch(0.96 0.006 256);
+	--muted-foreground: oklch(0.7 0.018 256);
+	--primary: oklch(0.78 0.118 195);
+	--primary-foreground: oklch(0.15 0.03 235);
+	--ring: oklch(0.78 0.118 195);
 
-	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.16 0.033 256);
+	--secondary: oklch(0.27 0.02 256);
+	--secondary-foreground: oklch(0.96 0.006 256);
+	--muted: oklch(0.27 0.02 256);
+	--accent: oklch(0.285 0.035 220);
+	--accent-foreground: oklch(0.97 0.006 256);
 
-	--primary: oklch(0.62 0.19 258); /* #3b82f6 */
-	--primary-foreground: oklch(1 0 0);
+	--destructive: oklch(0.68 0.205 25);
+	--destructive-foreground: oklch(0.15 0.04 25);
+	--warning: oklch(0.8 0.13 60);
+	--warning-foreground: oklch(0.15 0.03 60);
+	--success: oklch(0.76 0.14 165);
+	--success-foreground: oklch(0.14 0.03 165);
 
-	--secondary: oklch(0.59 0.22 292); /* #8b5cf6 */
-	--secondary-foreground: oklch(1 0 0);
+	--border: oklch(0.42 0.026 256);
+	--input: oklch(0.54 0.028 256);
 
-	--muted: oklch(0.93 0.012 255); /* #e8edf8 */
-	--muted-foreground: oklch(0.55 0.023 255); /* #64748b */
+	--chart-1: oklch(0.64 0.185 265);
+	--chart-2: oklch(0.78 0.175 125);
+	--chart-3: oklch(0.82 0.165 90);
+	--chart-4: oklch(0.66 0.19 335);
+	--chart-5: oklch(0.64 0.185 300);
 
-	--accent: oklch(0.8 0.16 164); /* #34d399 */
-	--accent-foreground: oklch(0.16 0.033 256);
+	--sidebar-primary: oklch(0.78 0.118 195);
+	--sidebar-primary-foreground: oklch(0.15 0.03 235);
+	--sidebar-accent: oklch(0.285 0.035 220);
+	--sidebar-accent-foreground: oklch(0.97 0.006 256);
+	--sidebar-border: oklch(0.42 0.026 256);
+	--sidebar-ring: oklch(0.78 0.118 195);
 
-	--destructive: oklch(0.63 0.22 25); /* #ef4444 */
-	--destructive-foreground: oklch(1 0 0);
-
-	--border: oklch(0.88 0.018 255); /* ~#cbd5e1 */
-	--input: oklch(0.92 0.014 255); /* ~#e2e8f0 */
-	--ring: oklch(0.62 0.19 258); /* primary blue */
-
-	/*  Charts (flag-inspired gradient across hues)  */
-	--chart-1: oklch(0.62 0.19 258); /* blue   — US/EU  */
-	--chart-2: oklch(0.59 0.22 292); /* purple — secondary */
-	--chart-3: oklch(0.8 0.16 164); /* emerald — Africa */
-	--chart-4: oklch(0.83 0.18 82); /* amber  — ghosts */
-	--chart-5: oklch(0.63 0.22 25); /* red    — high density */
-
-	/*  Sidebar  */
-	--sidebar: oklch(0.97 0.014 255);
-	--sidebar-foreground: oklch(0.16 0.033 256);
-	--sidebar-primary: oklch(0.62 0.19 258);
-	--sidebar-primary-foreground: oklch(1 0 0);
-	--sidebar-accent: oklch(0.93 0.012 255);
-	--sidebar-accent-foreground: oklch(0.44 0.023 255);
-	--sidebar-border: oklch(0.88 0.018 255);
-	--sidebar-ring: oklch(0.62 0.19 258);
-
-	/*  Audience Atlas brand tokens  */
-	--atlas-blue: oklch(0.62 0.19 258); /* #3b82f6  */
-	--atlas-purple: oklch(0.59 0.22 292); /* #8b5cf6  */
-	--atlas-emerald: oklch(0.8 0.16 164); /* #34d399  */
-	--atlas-amber: oklch(0.83 0.18 82); /* #fbbf24  */
-	--atlas-ghost-bg: oklch(0.97 0.05 82); /* #fffbeb  */
-	--atlas-ghost-border: oklch(0.88 0.15 87); /* #fcd34d  */
-	--atlas-ghost-text: oklch(0.38 0.12 55); /* #92400e  */
-	--atlas-orbit: oklch(0.83 0.18 82 / 35%); /* amber, semi-transparent */
-
-	/* Map-specific empties */
-	--atlas-map-empty: oklch(0.8 0.04 255); /* #c8d4e8  */
-	--atlas-map-base: oklch(0.88 0.025 255); /* #dde6f0  */
-	--atlas-sphere: oklch(0.8 0.04 255 / 40%);
-	--atlas-sphere-stroke: oklch(0.6 0.08 255 / 30%);
-}
-
-:root {
-	--background: oklch(0.09 0.027 258); /* #050d1a */
-	--foreground: oklch(0.93 0.038 255); /* #e0eaff */
-
-	--card: oklch(0.11 0.032 257); /* rgba(10,20,42,.93) */
-	--card-foreground: oklch(0.93 0.038 255);
-
-	--popover: oklch(0.11 0.032 257);
-	--popover-foreground: oklch(0.93 0.038 255);
-
-	--primary: oklch(0.62 0.19 258); /* #3b82f6 — same hue, dark bg */
-	--primary-foreground: oklch(1 0 0);
-
-	--secondary: oklch(0.59 0.22 292); /* #8b5cf6 */
-	--secondary-foreground: oklch(1 0 0);
-
-	--muted: oklch(0.12 0.025 258); /* #0d1424 */
-	--muted-foreground: oklch(0.44 0.023 255); /* #475569 */
-
-	--accent: oklch(0.8 0.16 164); /* #34d399 */
-	--accent-foreground: oklch(0.09 0.027 258);
-
-	--destructive: oklch(0.63 0.22 25); /* #ef4444 */
-	--destructive-foreground: oklch(1 0 0);
-
-	--border: oklch(0.62 0.19 258 / 9%); /* rgba(100,150,255,.09) */
-	--input: oklch(0.62 0.19 258 / 14%);
-	--ring: oklch(0.7 0.16 258); /* #60a5fa */
-
-	/*  Charts  */
-	--chart-1: oklch(0.7 0.16 258); /* lighter blue  */
-	--chart-2: oklch(0.72 0.18 292); /* lighter purple */
-	--chart-3: oklch(0.83 0.16 164); /* lighter emerald */
-	--chart-4: oklch(0.83 0.18 82); /* amber         */
-	--chart-5: oklch(0.72 0.2 25); /* lighter red   */
-
-	/*  Sidebar  */
-	--sidebar: oklch(0.08 0.025 258);
-	--sidebar-foreground: oklch(0.93 0.038 255);
-	--sidebar-primary: oklch(0.7 0.16 258);
-	--sidebar-primary-foreground: oklch(1 0 0);
-	--sidebar-accent: oklch(0.7 0.16 258 / 8%);
-	--sidebar-accent-foreground: oklch(0.82 0.1 255);
-	--sidebar-border: oklch(0.62 0.19 258 / 9%);
-	--sidebar-ring: oklch(0.7 0.16 258);
-
-	/* Audience Atlas brand tokens  */
-	--atlas-blue: oklch(0.7 0.16 258); /* #60a5fa  */
-	--atlas-purple: oklch(0.72 0.18 292); /* #a78bfa  */
-	--atlas-emerald: oklch(0.8 0.16 164); /* #34d399  */
-	--atlas-amber: oklch(0.83 0.18 82); /* #fbbf24  */
-	--atlas-ghost-bg: oklch(0.18 0.06 55 / 40%); /* warm dark amber tint */
-	--atlas-ghost-border: oklch(0.83 0.18 82 / 30%);
-	--atlas-ghost-text: oklch(0.83 0.18 82); /* #fbbf24  */
-	--atlas-orbit: oklch(0.83 0.18 82 / 22%);
-
-	/* Map empties */
-	--atlas-map-empty: oklch(0.12 0.03 258); /* #0d1424  */
-	--atlas-map-base: oklch(0.14 0.035 258); /* #0d1b33  */
-	--atlas-sphere: oklch(0.22 0.04 258 / 18%);
-	--atlas-sphere-stroke: oklch(0.55 0.16 258 / 12%);
+	--map-water: oklch(0.115 0.018 256);
+	--map-land: oklch(0.28 0.016 250);
+	--map-graticule: oklch(0.33 0.014 250);
 }
 
 @layer base {
-	*,
-	*::before,
-	*::after {
-		@apply border-border;
-		box-sizing: border-box;
+	* {
+		@apply border-border outline-ring/50;
 	}
-
-	html {
-		/* Sync .dark class with the isDark state managed in App.jsx */
-		color-scheme: light;
-		&.dark {
-			color-scheme: dark;
-		}
-	}
-
 	body {
 		@apply bg-background text-foreground;
-		font-family: var(--font-sans);
-		-webkit-font-smoothing: antialiased;
-		-moz-osx-font-smoothing: grayscale;
-	}
-
-	h1,
-	h2,
-	h3,
-	h4,
-	h5,
-	h6 {
-		font-family: var(--font-sans);
-		font-weight: 700;
-	}
-
-	code,
-	kbd,
-	pre,
-	samp {
-		font-family: var(--font-mono);
-	}
-
-	::-webkit-scrollbar {
-		width: 3px;
-		height: 3px;
-	}
-	::-webkit-scrollbar-track {
-		background: transparent;
-	}
-	::-webkit-scrollbar-thumb {
-		background: oklch(0.55 0.1 258 / 25%);
-		border-radius: 2px;
-	}
-}
-
-@layer utilities {
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
-	}
-	@keyframes pulse {
-		0%,
-		100% {
-			opacity: 0.55;
-		}
-		50% {
-			opacity: 1;
-		}
-	}
-	@keyframes fadeUp {
-		from {
-			opacity: 0;
-			transform: translateY(14px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-	@keyframes slideIn {
-		from {
-			opacity: 0;
-			transform: translateX(18px);
-		}
-		to {
-			opacity: 1;
-			transform: translateX(0);
-		}
-	}
-	@keyframes fadeIn {
-		from {
-			opacity: 0;
-		}
-		to {
-			opacity: 1;
-		}
-	}
-	@keyframes ghostFloat {
-		0%,
-		100% {
-			transform: translateY(0);
-		}
-		50% {
-			transform: translateY(-6px);
-		}
-	}
-	@keyframes twinkle {
-		0%,
-		100% {
-			opacity: 0.12;
-		}
-		60% {
-			opacity: 0.9;
-		}
-	}
-	@keyframes orbitDrift {
-		0% {
-			transform: translate(0, 0) rotate(0deg);
-		}
-		25% {
-			transform: translate(4px, -5px) rotate(5deg);
-		}
-		50% {
-			transform: translate(-3px, 4px) rotate(-4deg);
-		}
-		75% {
-			transform: translate(-5px, -2px) rotate(7deg);
-		}
-		100% {
-			transform: translate(0, 0) rotate(0deg);
-		}
-	}
-	@keyframes signalPulse {
-		0%,
-		100% {
-			opacity: 0.15;
-			transform: scale(1);
-		}
-		50% {
-			opacity: 0.5;
-			transform: scale(1.08);
-		}
-	}
-
-	@keyframes accordion-down {
-		from {
-			height: 0;
-		}
-		to {
-			height: var(--radix-accordion-content-height);
-		}
-	}
-	@keyframes accordion-up {
-		from {
-			height: var(--radix-accordion-content-height);
-		}
-		to {
-			height: 0;
-		}
-	}
-}
-
-@layer utilities {
-	.atlas-ghost-surface {
-		background-color: var(--atlas-ghost-bg);
-		border-color: var(--atlas-ghost-border);
-		color: var(--atlas-ghost-text);
-	}
-
-	.atlas-brand-text {
-		background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #34d399 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
-	}
-
-	.atlas-gradient-bg {
-		background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-	}
-
-	.atlas-gradient-progress {
-		background: linear-gradient(90deg, #3b82f6, #8b5cf6, #34d399);
-	}
-
-	.atlas-card {
-		background-color: var(--card);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-xl);
-		backdrop-filter: blur(20px);
-	}
-
-	.atlas-orbit-stroke {
-		stroke: var(--atlas-orbit);
-	}
-
-	.atlas-grid-bg {
-		background-image:
-			linear-gradient(var(--atlas-map-empty) 1px, transparent 1px),
-			linear-gradient(90deg, var(--atlas-map-empty) 1px, transparent 1px);
-		background-size: 70px 70px;
-	}
-
-	.atlas-mono {
-		font-family: var(--font-mono);
-	}
-
-	.atlas-spinner {
-		animation: spin 1s linear infinite;
-		display: inline-block;
 	}
 }
