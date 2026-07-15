@@ -113,7 +113,7 @@ export const WorldMap = ({
 	}
 
 	return (
-		<svg width={width} height={height} className='bg-(--atlas-sphere)'>
+		<svg width={width} height={height} className='var(--map-space)'>
 			<g>
 				<path
 					d={pathGenerator({ type: "Sphere" }) as string}

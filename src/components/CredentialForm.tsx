@@ -30,7 +30,7 @@ export default function CredentialForm({
 			<div className='flex flex-col items-center gap-3 text-center'>
 				<div className='text-5xl'>🌍</div>
 				<div>
-					<h1 className='text-xl sm:text-2xl text-muted-foreground font-bold atlas-brand-text'>
+					<h1 className='text-xl sm:text-2xl text-muted-foreground font-bold'>
 						GITHUB AUDIENCE ATLAS
 					</h1>
 					<p className='text-xs text-muted-foreground mt-1'>
