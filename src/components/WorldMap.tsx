@@ -78,16 +78,13 @@ export const WorldMap = ({
 			Math.max(0, ...Array.from(profilesByCountry.values()).map((p) => p.length)),
 		[profilesByCountry]
 	);
-	function useHeatScale(maxCount: number) {
-		return useMemo(() => {
-			const domainMax = Math.max(1, maxCount);
-			return scaleLog()
-				.domain([1, domainMax + 1])
-				.range([0.22, 0.95])
-				.clamp(true);
-		}, [maxCount]);
-	}
-	const heatScale = useHeatScale(maxCount);
+	const heatScale = useMemo(() => {
+		const domainMax = Math.max(1, maxCount);
+		return scaleLog()
+			.domain([1, domainMax + 1])
+			.range([0.22, 0.95])
+			.clamp(true);
+	}, [maxCount]);
 
 	if (loadError) {
 		return (
