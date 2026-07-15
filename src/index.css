@@ -112,9 +112,9 @@
 	--sidebar-border: oklch(0.42 0.026 256);
 	--sidebar-ring: oklch(0.78 0.118 195);
 
-	--map-water: oklch(0.115 0.018 256);
-	--map-land: oklch(0.28 0.016 250);
-	--map-graticule: oklch(0.33 0.014 250);
+	--map-space: oklch(0.15 0.025 256);
+	--map-water: oklch(0.115 0.02 256);
+	--map-land: oklch(0.19 0.015 250);
 }
 
 @layer base {
