@@ -2,7 +2,7 @@ import { useGeoJson } from "@/hooks/useGeoJson";
 import { MAP_BASE_STYLING } from "@/lib/getCountryColor";
 import type { LocalizedGithubProfile } from "@/types/api.types";
 import { geoNaturalEarth1, geoPath } from "d3-geo";
-import { scaleLog } from "d3";
+import { scaleLog } from "d3-scale";
 import type { Geometry } from "geojson";
 import { useMemo } from "react";
 
@@ -113,7 +113,7 @@ export const WorldMap = ({
 	}
 
 	return (
-		<svg width={width} height={height} className='var(--map-space)'>
+		<svg width={width} height={height} className='bg-(--map-space)'>
 			<g>
 				<path
 					d={pathGenerator({ type: "Sphere" }) as string}
