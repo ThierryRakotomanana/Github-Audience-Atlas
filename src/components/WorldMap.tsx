@@ -1,7 +1,8 @@
 import { useGeoJson } from "@/hooks/useGeoJson";
-import { getCountryColor, MAP_BASE_STYLING } from "@/lib/getCountryColor";
+import { MAP_BASE_STYLING } from "@/lib/getCountryColor";
 import type { LocalizedGithubProfile } from "@/types/api.types";
-import { geoNaturalEarth1, geoPath, geoGraticule } from "d3-geo";
+import { geoNaturalEarth1, geoPath } from "d3-geo";
+import { scaleLog } from "d3-scale";
 import type { Geometry } from "geojson";
 import { useMemo } from "react";
 
@@ -52,11 +53,6 @@ export const WorldMap = ({
 		return geoPath().projection(projection);
 	}, [projection]);
 
-	const graticulePath = useMemo(() => {
-		const graticule = geoGraticule();
-		return pathGenerator(graticule()) || "";
-	}, [pathGenerator]);
-
 	const mapPaths = useMemo(() => {
 		if (!geoJson) return [];
 
@@ -77,6 +73,19 @@ export const WorldMap = ({
 		}, new Map<string, LocalizedGithubProfile[]>());
 	}, [audience]);
 
+	const maxCount = useMemo(
+		() =>
+			Math.max(0, ...Array.from(profilesByCountry.values()).map((p) => p.length)),
+		[profilesByCountry]
+	);
+	const heatScale = useMemo(() => {
+		const domainMax = Math.max(1, maxCount);
+		return scaleLog()
+			.domain([1, domainMax + 1])
+			.range([0.22, 0.95])
+			.clamp(true);
+	}, [maxCount]);
+
 	if (loadError) {
 		return (
 			<div
@@ -86,7 +95,7 @@ export const WorldMap = ({
 				<button
 					type='button'
 					onClick={setReloadKey}
-					className='rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted'>
+					className='rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'>
 					Retry
 				</button>
 			</div>
@@ -104,21 +113,17 @@ export const WorldMap = ({
 	}
 
 	return (
-		<svg width={width} height={height} className='bg-[#030508]'>
-			<g>
-				<path d={pathGenerator({ type: "Sphere" }) as string} fill='#0B0F19'></path>
-			</g>
+		<svg width={width} height={height} className='bg-(--map-space)'>
 			<g>
 				<path
-					d={graticulePath}
-					fill='none'
-					stroke='#bcc3d1'
-					strokeWidth={0.05}></path>
+					d={pathGenerator({ type: "Sphere" }) as string}
+					fill='var(--map-water)'
+				/>
 			</g>
 			<defs>
-				<filter id='map-glow' x='-20%' y='-20%' width='140%' height='140%'>
+				<filter id='map-glow' x='-10%' y='-10%' width='110%' height='110%'>
 					<feGaussianBlur stdDeviation='15' result='blur' />
-					<feFlood flood-color='rgba(0, 255, 239, 0.25)' result='color' />
+					<feFlood floodColor='var(--primary)' floodOpacity='0.15' result='color' />
 					<feComposite in='color' in2='blur' operator='in' result='coloredGlow' />
 					<feComposite
 						in='coloredGlow'
@@ -132,30 +137,35 @@ export const WorldMap = ({
 					</feMerge>
 				</filter>
 			</defs>
-			<g filter='url(#map-glow)'>
-				{mapPaths.map((country) => (
-					<path
-						key={`${country.id}-${country.name}`}
-						d={country.svgPath}
-						fill={
-							profilesByCountry.get(country.id) ?
-								`${getCountryColor(country.id)}`
-							:	MAP_BASE_STYLING.defaultFill
-						}
-						className='cursor-pointer transition-all duration-100 hover:stroke-[1.75px] hover:brightness-110 focus:outline-none focus:stroke-[1.75px] stroke-[0.125px] stroke-slate-200'
-						tabIndex={0}
-						onClick={() => {
-							setCountry(country.id);
-						}}
-						onKeyDown={(e) => {
-							if (e.key === "Enter" || e.key === " ") {
-								e.preventDefault();
-								setCountry(country.id);
+			<g filter=''>
+				{mapPaths.map((country) => {
+					const count = profilesByCountry.get(country.id)?.length ?? 0;
+					const hasData = count > 0;
+					return (
+						<path
+							key={`${country.id}-${country.name}`}
+							d={country.svgPath}
+							fill={
+								hasData ?
+									`hsl(var(--signal) / ${heatScale(count).toFixed(2)})`
+								:	MAP_BASE_STYLING.defaultFill
 							}
-						}}
-					/>
-				))}
-				)
+							className='transition-colors duration-300 ease-in-out cursor-pointer stroke-[0.05px] stroke-accent-foreground hover:stroke-[1.5px] hover:stroke-accent-foreground hover:brightness-110 focus:outline-none focus-visible:stroke-[2.5px] focus-visible:stroke-ring'
+							tabIndex={0}
+							role='button'
+							aria-label={`${country.name}${profilesByCountry.get(country.id) ? `, ${profilesByCountry.get(country.id)!.length} follower${profilesByCountry.get(country.id)!.length > 1 ? "s" : ""}` : ", no followers"}`}
+							onClick={() => {
+								setCountry(country.id);
+							}}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault();
+									setCountry(country.id);
+								}
+							}}
+						/>
+					);
+				})}
 			</g>
 		</svg>
 	);

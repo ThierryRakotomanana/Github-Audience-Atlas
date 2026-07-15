@@ -76,12 +76,14 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 		);
 	}, [selectedProfiles, search]);
 
+	const searchLabel = country ? "Search followers" : "Search countries";
+
 	return (
 		<div className='flex h-full flex-col gap-4'>
 			<div className='flex items-center justify-between gap-2'>
 				{country ?
 					<div
-						className={`flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-3 py-2`}
+						className='flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-3 py-2'
 						style={{ background: `${getCountryColor(country)}20` }}>
 						<CountryFlag
 							isoCode={country}
@@ -91,7 +93,7 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 							<button
 								type='button'
 								onClick={() => setCountry(null)}
-								className='inline-flex min-w-0 items-center gap-2 rounded-full border border-border bg-muted/40 py-1 pl-2 pr-1 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted'>
+								className='inline-flex min-w-0 items-center gap-2 rounded-full border border-border bg-muted/40 py-1 pl-2 pr-1 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'>
 								<span className='truncate'>{getRegionName(country)}</span>
 								<span className='flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground'>
 									<X size={12} />
@@ -99,7 +101,7 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 							</button>
 							<Badge
 								variant='outline'
-								className='shrink-0 font-mono text-xs font-normal bg-muted/40 text-foreground/60'>
+								className='shrink-0 font-mono text-xs font-normal bg-muted/40 text-muted-foreground'>
 								{country ?
 									`${selectedProfiles?.length ?? 0} followers`
 								:	`${sortedCountries.length} regions`}
@@ -108,7 +110,7 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 					</div>
 				:	<Badge
 						variant='outline'
-						className='shrink-0 font-mono text-xs font-normal bg-muted/40 text-foreground/60'>
+						className='shrink-0 font-mono text-xs font-normal bg-muted/40 text-muted-foreground'>
 						{sortedCountries.length} country
 					</Badge>
 				}
@@ -116,10 +118,14 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 
 			<div className='relative'>
 				<Search className='pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground' />
+				<label htmlFor='country-list-search' className='sr-only'>
+					{searchLabel}
+				</label>
 				<Input
+					id='country-list-search'
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
-					placeholder={country ? "Search followers…" : "Search countries…"}
+					placeholder={`${searchLabel}…`}
 					className='h-8 pl-8 text-sm'
 				/>
 			</div>
@@ -133,7 +139,7 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 									key={code}
 									type='button'
 									onClick={() => setCountry(code)}
-									className='group relative flex w-full items-center justify-between overflow-hidden rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50'>
+									className='group relative flex w-full items-center justify-between overflow-hidden rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'>
 									<span
 										aria-hidden
 										className='absolute inset-y-0 left-0 bg-primary/10 transition-all group-hover:bg-primary/15'
@@ -170,7 +176,7 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 								href={profile.html_url}
 								target='_blank'
 								rel='noreferrer'
-								className='group flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50'>
+								className='group flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'>
 								<span className='flex min-w-0 items-center gap-3'>
 									<Avatar className='h-9 w-9 border border-border'>
 										<AvatarImage src={profile.avatar_url} alt={profile.login} />
@@ -187,7 +193,7 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 										</span>
 									</span>
 								</span>
-								<ExternalLink className='h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100' />
+								<ExternalLink className='h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100' />
 							</a>
 						))}
 					</div>

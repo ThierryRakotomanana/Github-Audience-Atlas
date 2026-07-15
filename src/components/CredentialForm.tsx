@@ -26,11 +26,11 @@ export default function CredentialForm({
 	}
 
 	return (
-		<div className='min-h-svh flex flex-col items-center justify-center atlas-grid-bg gap-6 px-4 py-8'>
+		<div className='min-h-svh bg-background flex flex-col items-center justify-center gap-6 px-4 py-8'>
 			<div className='flex flex-col items-center gap-3 text-center'>
 				<div className='text-5xl'>🌍</div>
 				<div>
-					<h1 className='text-xl sm:text-2xl font-extrabold text-blue-700'>
+					<h1 className='text-xl sm:text-2xl text-muted-foreground font-bold'>
 						GITHUB AUDIENCE ATLAS
 					</h1>
 					<p className='text-xs text-muted-foreground mt-1'>
@@ -45,7 +45,7 @@ export default function CredentialForm({
 						<div className='flex flex-col gap-2'>
 							<Label
 								htmlFor='user'
-								className='text-xs font-normal text-muted-foreground/45'>
+								className='text-xs font-normal text-muted-foreground'>
 								GitHub Username
 							</Label>
 							<div className='relative'>
@@ -93,7 +93,7 @@ export default function CredentialForm({
 									onClick={() => setShowToken((show) => !show)}
 									aria-label={showToken ? "Hide token" : "Show token"}
 									aria-pressed={showToken}
-									className='absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors'>
+									className='absolute right-3 top-1/2 -translate-y-1/2 rounded text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'>
 									{showToken ?
 										<EyeOff className='h-4 w-4' />
 									:	<Eye className='h-4 w-4' />}
@@ -137,7 +137,7 @@ export default function CredentialForm({
 								href='https://github.com/settings/tokens'
 								target='_blank'
 								rel='noopener noreferrer'
-								className='text-xs text-primary hover:underline text-center'>
+								className='text-xs text-primary hover:underline text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded'>
 								Generate a token →
 							</a>
 						</div>
