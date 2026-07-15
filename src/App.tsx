@@ -75,7 +75,7 @@ function App() {
 						<div className='flex items-center gap-4 sm:gap-6 shrink-0'>
 							<Stat label='Followers' value={user.followers} />
 							<Stat label='Following' value={user.following} />
-							<Separator orientation='vertical' className='h-4' />
+							<Separator orientation='vertical' />
 							<a
 								href={
 									"https://github.com/ThierryRakotomanana/Github-Audience-Atlas"
