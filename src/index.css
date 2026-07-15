@@ -67,7 +67,7 @@
 
 :root {
 	color-scheme: dark;
-	--radius: 0.5rem;
+	--radius: 0.4rem;
 
 	--background: oklch(0.15 0.02 256);
 	--sidebar: oklch(0.175 0.02 256);
