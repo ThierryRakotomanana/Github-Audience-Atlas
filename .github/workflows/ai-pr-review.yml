@@ -131,7 +131,7 @@ jobs:
               last_err = None
               for attempt in range(1, max_attempts + 1):
                   try:
-                      with urllib.request.urlopen(request, timeout=60) as resp:
+                      with urllib.request.urlopen(request, timeout=180) as resp:
                           return json.loads(resp.read())
                   except urllib.error.HTTPError as e:
                       last_err = e
