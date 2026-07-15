@@ -22,9 +22,6 @@ import {
 } from "@/components/ui/sheet";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, List, Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { GithubIcon } from "@/components/icons/lucide-github";
 
 type AudienceType = "followers" | "following" | "ghosts";
 
@@ -76,16 +73,6 @@ function App() {
 						<div className='flex items-center gap-4 sm:gap-6 shrink-0'>
 							<Stat label='Followers' value={user.followers} />
 							<Stat label='Following' value={user.following} />
-							<Separator orientation='vertical' className='h-4' />
-							<a
-								href={
-									"https://github.com/ThierryRakotomanana/Github-Audience-Atlas"
-								}
-								target='_blank'
-								rel='noreferrer'
-								className='text-xs text-muted-foreground font-mono hover:text-foreground transition-colors'>
-								<GithubIcon />
-							</a>
 						</div>
 					</div>
 				</header>
@@ -96,20 +83,11 @@ function App() {
 					<div className='max-w-6xl mx-auto px-4 sm:px-6 py-1 flex items-center justify-between gap-3'>
 						<Tabs
 							value={audienceType}
-							onValueChange={(v) => setAudienceType(v as AudienceType)}
-							className='overflow-x-auto'>
-							<TabsList>
+							onValueChange={(v) => setAudienceType(v as AudienceType)}>
+							<TabsList className='bg-muted'>
 								{AUDIENCE_TABS.map((tab) => (
-									<TabsTrigger
-										key={tab.value}
-										value={tab.value}
-										className='text-xs sm:text-sm'>
-										<Badge
-											className={
-												tab.value !== audienceType ? "bg-card" : "text-background"
-											}>
-											{tab.label}
-										</Badge>
+									<TabsTrigger key={tab.value} value={tab.value}>
+										{tab.label}
 									</TabsTrigger>
 								))}
 							</TabsList>

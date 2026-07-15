@@ -4,10 +4,13 @@ import { CheckCircle2, Loader2, CircleDashed } from "lucide-react";
 import type { Step } from "../types/api.types";
 
 function StepIcon({ status }: { status: Step["status"] }) {
-	if (status === "done") return <CheckCircle2 className='h-5 w-5 text-accent' />;
-	if (status === "active")
-		return <Loader2 className='h-5 w-5 animate-spin text-primary' />;
-	return <CircleDashed className='h-5 w-5 text-muted-foreground' />;
+	if (status === "done") {
+		return <CheckCircle2 className='h-5 w-5 text-green-600' aria-hidden />;
+	}
+	if (status === "active") {
+		return <Loader2 className='h-5 w-5 animate-spin text-primary' aria-hidden />;
+	}
+	return <CircleDashed className='h-5 w-5 text-muted-foreground' aria-hidden />;
 }
 
 function StepRow({ step }: { step: Step }) {
@@ -35,9 +38,12 @@ function StepRow({ step }: { step: Step }) {
 
 export function LoadingView({ steps, pct }: { steps: Step[]; pct: number }) {
 	return (
-		<div className='w-full flex-1 flex flex-col items-center justify-center gap-4 px-4 py-8'>
+		<div
+			role='status'
+			aria-live='polite'
+			className='w-full flex-1 flex flex-col items-center justify-center gap-4 px-4 py-8'>
 			<div className='w-full max-w-md'>
-				<p className='text-xl font-medium text-center mb-4'>
+				<p className='text-xl font-medium text-center text-muted-foreground mb-4'>
 					{pct <= 50 ? "Fetching your audience..." : "Building your atlas..."}
 				</p>
 				<div className='w-full flex items-center justify-between gap-2 mb-2'>
@@ -46,7 +52,6 @@ export function LoadingView({ steps, pct }: { steps: Step[]; pct: number }) {
 				</div>
 				<Progress value={pct} className='h-1.5 [&>div]:bg-primary' />
 			</div>
-
 			<Card className='w-full max-w-md'>
 				<CardContent className='p-4 flex flex-col divide-y divide-border'>
 					{steps.map((step) => (
