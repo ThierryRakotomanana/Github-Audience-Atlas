@@ -2,7 +2,7 @@
 
 # 🗺️ GitHub Audience Map
 
-**See exactly who's in your GitHub network — and where they're building from.**
+**See exactly who's in your GitHub network : and where they're building from.**
 
 An interactive world map that visualizes the geographic distribution of your followers, the people you follow, and the "ghosts" who don't follow you back.
 
@@ -12,7 +12,7 @@ An interactive world map that visualizes the geographic distribution of your fol
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](#license)
 
-**🔗 [Try it live](https://github-audience-atlas.vercel.app/) — 100% client-side, your token never leaves your browser.**
+**🔗 [Try it live](https://github-audience-atlas.vercel.app/) : 100% client-side, your token never leaves your browser.**
 
 [Live Demo](https://github-audience-atlas.vercel.app/) • [Features](#-key-features) • [Security](#-security--privacy) • [Quick Start](#-quick-start) • [Usage](#-usage) • [Architecture](#-how-it-works) • [Contributing](#-contributing)
 
@@ -21,7 +21,7 @@ An interactive world map that visualizes the geographic distribution of your fol
 <br>
 
 <p align="center">
-  <img src="./public/presentation-map.png" alt="GitHub Audience Map — interactive world map preview" width="1000">
+  <img src="./public/presentation-map.png" alt="GitHub Audience Map : interactive world map preview" width="1000">
 </p>
 
 ---
@@ -47,7 +47,7 @@ An interactive world map that visualizes the geographic distribution of your fol
 
 ### The Problem
 
-GitHub gives you raw lists of followers and following — but no sense of who these people actually are or where your influence really reaches. It's also easy to lose track of **non-reciprocal relationships**: accounts you follow that never followed back.
+GitHub gives you raw lists of followers and following : but no sense of who these people actually are or where your influence really reaches. It's also easy to lose track of **non-reciprocal relationships**: accounts you follow that never followed back.
 
 ### The Solution
 
@@ -104,7 +104,7 @@ Pasting a token into a random website is normally bad advice, so here's exactly 
 
 ## 🛠️ Tech Stack
 
-> **Note:** The fields below are placeholders — replace them with your project's actual stack so contributors know what they're working with before they clone the repo.
+> **Note:** The fields below are placeholders : replace them with your project's actual stack so contributors know what they're working with before they clone the repo.
 
 | Layer                   | Technology                                         |
 | ----------------------- | -------------------------------------------------- |
@@ -141,11 +141,11 @@ Before you begin, make sure you have:
 
 ## 🚀 Quick Start
 
-### Option A — Use the Live App (fastest)
+### Option A : Use the Live App (fastest)
 
 No install required, just open **[github-audience-atlas.vercel.app](https://github-audience-atlas.vercel.app/)** and go straight to [Usage](#-usage). See [Security & Privacy](#-security--privacy) for how your token is (and isn't) handled.
 
-### Option B — Run It Locally
+### Option B : Run It Locally
 
 ```bash
 # 1. Clone the repository
@@ -158,8 +158,6 @@ npm install
 # 3. Start the app
 npm run dev
 ```
-
-> **Note:** Swap these commands for your actual build tooling (Vite, Next.js, CRA, etc.) and confirm the exact script names in `package.json`.
 
 ### Environment Variables
 
@@ -174,7 +172,7 @@ If you prefer supplying your token via environment variable instead of pasting i
 GITHUB_TOKEN=your_personal_access_token_here
 ```
 
-> ⚠️ Add `.env` to your `.gitignore` — never commit real tokens.
+> ⚠️ Add `.env` to your `.gitignore` : never commit real tokens.
 
 ---
 
@@ -200,12 +198,10 @@ flowchart LR
     E --> F[Render Interactive World Map]
 ```
 
-1. **Fetch** — Authenticated calls to the GitHub REST API retrieve your followers and following lists.
-2. **Categorize** — Accounts are cross-referenced to identify followers, following, and non-reciprocal "ghosts."
-3. **Resolve** — Each account's public location field is used to place it on the map.
-4. **Render** — Results are plotted on an interactive, explorable world map.
-
-> Update this section with your actual implementation details (caching strategy, geocoding provider, rate-limit handling, etc.) once finalized.
+1. **Fetch** : Authenticated calls to the GitHub REST API retrieve your followers and following lists.
+2. **Categorize** : Accounts are cross-referenced to identify followers, following, and non-reciprocal "ghosts."
+3. **Resolve** : Each account's public location field is used to place it on the map.
+4. **Render** : Results are plotted on an interactive, explorable world map.
 
 ---
 
@@ -239,7 +235,7 @@ Contributions are welcome! To get started:
    ```
 4. **Push** and open a **Pull Request** describing what you changed and why.
 
-> **Good first issues** are a great place to start — check the [Issues tab](../../issues) for anything labeled `good first issue` or pick an unchecked item from the [Roadmap](#-roadmap).
+> **Good first issues** are a great place to start : check the [Issues tab](../../issues) for anything labeled `good first issue` or pick an unchecked item from the [Roadmap](#-roadmap).
 
 ---
 
@@ -253,7 +249,7 @@ Contributions are welcome! To get started:
 
 Built and maintained by **Thierry Rakotomanana**.
 
-If you find this project useful, consider following along — new tools and open-source contributions are shared regularly.
+If you find this project useful, consider following along : new tools and open-source contributions are shared regularly.
 
 [![GitHub](https://img.shields.io/badge/GitHub-ThierryRakotomanana-181717?style=for-the-badge&logo=github)](https://github.com/ThierryRakotomanana)
 
