@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Eye, EyeOff, User, KeyRound } from "lucide-react";
-import type { Credentials } from "../types/api.types";
+import type { Credentials } from "@/api/graphql.types";
 
 const REQUIRED_SCOPES = ["read:user", "read:followers"] as const;
 const UNFOLLOW_SCOPE = "user:follow";

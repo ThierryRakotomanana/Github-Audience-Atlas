@@ -1,24 +1,23 @@
 import { useCallback, useEffect, useReducer } from "react";
-import type {
-	AudienceData,
-	CostEstimate,
-	Credentials,
-	GithubProfile,
-	GithubUser,
-	LocalizedGithubProfile,
-	Step,
-	StepId
-} from "../types/api.types";
+import { geocode } from "../lib/geocode";
 import {
 	delay,
-	estimateCost,
-	fetchAllPages,
-	fetchAudiencesProfiles,
 	fetchUserProfile,
+	fetchAllAudience,
+	RateLimitError,
 	GithubApiError,
-	RateLimitError
-} from "../api/github";
-import { geocode } from "../lib/geocode";
+	estimateAudienceCost
+} from "@/api/graphql.api";
+import type {
+	Step,
+	GithubUserProfile,
+	AudienceData,
+	StepId,
+	Credentials,
+	GithubProfileNode,
+	LocalizedGithubProfile,
+	CostEstimate
+} from "@/api/graphql.types";
 
 const INITIAL_STEPS: Step[] = [
 	{
@@ -27,10 +26,10 @@ const INITIAL_STEPS: Step[] = [
 		status: "idle",
 		detail: ""
 	},
-	{ id: "profiles", label: "Loading profiles", status: "idle", detail: "" },
 	{ id: "geocode", label: "Finding user's country", status: "idle", detail: "" },
 	{ id: "done", label: "Building audience", status: "idle", detail: "" }
 ];
+
 export type FetchStatus =
 	| "idle"
 	| "loading"
@@ -42,7 +41,7 @@ export type AudienceState = {
 	status: FetchStatus;
 	steps: Step[];
 	pct: number;
-	user: GithubProfile | null;
+	user: GithubUserProfile | null;
 	audience: AudienceData | null;
 	error: string | null;
 	resetAt: Date | null;
@@ -62,7 +61,7 @@ const initialState: AudienceState = {
 
 type Action =
 	| { type: "FETCH_START" }
-	| { type: "USER_RESOLVED"; user: GithubProfile }
+	| { type: "USER_RESOLVED"; user: GithubUserProfile }
 	| { type: "STEP_UPDATE"; id: StepId; patch: Partial<Omit<Step, "id">> }
 	| { type: "PROGRESS"; pct: number }
 	| { type: "FETCH_SUCCESS"; audience: AudienceData; status: FetchStatus }
@@ -146,13 +145,18 @@ export function useAudience(credentials: Credentials): UseAudienceReturn {
 		) {
 			dispatch({ type: "FETCH_START" });
 			try {
-				const { data: user, rateLimit } = await fetchUserProfile({
-					...credentials,
+				const { profile: user, rateLimit } = await fetchUserProfile(
+					credentials.user,
+					credentials.token,
 					signal
-				});
+				);
 				dispatch({ type: "USER_RESOLVED", user });
 
-				const estimate = estimateCost(user.followers, user.following, rateLimit);
+				const estimate = estimateAudienceCost(
+					user.followersCount,
+					user.followingCount,
+					rateLimit
+				);
 				if (estimate.willExceed && !skipWarning) {
 					dispatch({ type: "QUOTA_WARNING", estimate });
 					return;
@@ -160,86 +164,79 @@ export function useAudience(credentials: Credentials): UseAudienceReturn {
 
 				updateStep("fetch", {
 					status: "active",
-					detail: "0 followers 0 following"
+					detail: "0 followers · 0 following"
 				});
 
-				const [rawFollowers, rawFollowing] = await Promise.all([
-					fetchAllPages(credentials, "followers", signal, (n) =>
-						updateStep("fetch", { detail: `${n} followers…` })
+				let followersDone = 0;
+				let followingDone = 0;
+				const reportFetchProgress = () =>
+					updateStep("fetch", {
+						detail: `${followersDone} followers · ${followingDone} following…`
+					});
+
+				const [followers, following] = await Promise.all([
+					fetchAllAudience(
+						credentials.user,
+						"followers",
+						credentials.token,
+						(done) => {
+							followersDone = done;
+							reportFetchProgress();
+						},
+						signal
 					),
-					fetchAllPages(credentials, "following", signal, (n) =>
-						updateStep("fetch", {
-							detail: `${n} following…`
-						})
+					fetchAllAudience(
+						credentials.user,
+						"following",
+						credentials.token,
+						(done) => {
+							followingDone = done;
+							reportFetchProgress();
+						},
+						signal
 					)
 				]);
 
 				updateStep("fetch", {
 					status: "done",
-					detail: `${rawFollowers.length} followers · ${rawFollowing.length} following`
+					detail: `${followers.length} followers · ${following.length} following`
 				});
-				dispatch({ type: "PROGRESS", pct: 20 });
+				dispatch({ type: "PROGRESS", pct: 40 });
 
-				const uniqueLogins = [
-					...new Set(
-						[...rawFollowers, ...rawFollowing].map((audience) => audience.login)
-					)
-				];
-
-				updateStep("profiles", {
-					status: "active",
-					detail: `0 / ${uniqueLogins.length}`
-				});
-
-				const audienceProfiles = await fetchAudiencesProfiles(
-					uniqueLogins,
-					credentials.token,
-					signal,
-					({ done, total }) => {
-						updateStep("profiles", { detail: `${done} / ${total}` });
-						dispatch({
-							type: "PROGRESS",
-							pct: 20 + Math.round((done / total) * 55)
-						});
-					}
-				);
-
-				updateStep("profiles", { status: "done" });
+				const uniqueProfiles = new Map<string, GithubProfileNode>();
+				for (const profile of [...followers, ...following]) {
+					uniqueProfiles.set(profile.login, profile);
+				}
 
 				updateStep("geocode", { status: "active", detail: "computing…" });
 				const { profileCountryMap } = await geocode(
-					[...audienceProfiles.values()],
+					[...uniqueProfiles.values()],
 					({ done, total }) => {
 						updateStep("geocode", { detail: `${done} / ${total}` });
 						dispatch({
 							type: "PROGRESS",
-							pct: 75 + Math.round((done / total) * 25)
+							pct: 40 + Math.round((done / total) * 60)
 						});
 					}
 				);
 				updateStep("geocode", { status: "done" });
-				const resolve = (rawAudiences: GithubUser[]): LocalizedGithubProfile[] => {
-					return rawAudiences.flatMap((rawAudience) => {
-						const audienceProfile = audienceProfiles.get(rawAudience.login);
-						const countryCode = profileCountryMap.get(rawAudience.login);
 
-						if (audienceProfile && countryCode) {
-							return [
-								{
-									...audienceProfile,
-									country: countryCode
-								} as LocalizedGithubProfile
-							];
-						}
-
-						return [];
+				const resolve = (profiles: GithubProfileNode[]): LocalizedGithubProfile[] =>
+					profiles.flatMap((profile) => {
+						const country = profileCountryMap.get(profile.login);
+						return country ? [{ ...profile, country }] : [];
 					});
+				const computeGhosts = <T extends { login: string }>(
+					followers: T[],
+					following: T[]
+				): T[] => {
+					const followerLogins = new Set(followers.map((f) => f.login));
+					return following.filter((f) => !followerLogins.has(f.login));
 				};
 
-				const followingProfiles = resolve(rawFollowing);
-				const isGhost = new Set<number>(
-					rawFollowers.map((follower) => follower.id)
-				);
+				const followerProfiles = resolve(followers);
+				const followingProfiles = resolve(following);
+				const ghosts = computeGhosts(followerProfiles, followingProfiles);
 
 				updateStep("done", { status: "done", detail: "All data loaded" });
 				dispatch({ type: "PROGRESS", pct: 100 });
@@ -249,11 +246,9 @@ export function useAudience(credentials: Credentials): UseAudienceReturn {
 				dispatch({
 					type: "FETCH_SUCCESS",
 					audience: {
-						ghosts: followingProfiles.filter(
-							(following) => !isGhost.has(following.id)
-						),
-						followers: resolve(rawFollowers),
-						following: followingProfiles
+						followers: followerProfiles,
+						following: followingProfiles,
+						ghosts
 					},
 					status: "success"
 				});

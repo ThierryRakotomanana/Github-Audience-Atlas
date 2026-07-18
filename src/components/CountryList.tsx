@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { ExternalLink, Search, X } from "lucide-react";
-import type { LocalizedGithubProfile } from "@/types/api.types";
 import { CountryFlag } from "@/components/CountryFlag";
 import { getRegionName, UNKNOWN_REGION } from "@/lib/region";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { RegionIcon } from "@/components/RegionIcon.Panel";
 import { EmptyState } from "@/components/EmptyState.Panel";
+import type { LocalizedGithubProfile } from "@/api/graphql.types";
 
 interface CountryListProps {
 	data: LocalizedGithubProfile[];
@@ -173,13 +173,13 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 						{filteredProfiles.map((profile) => (
 							<a
 								key={profile.id}
-								href={profile.html_url}
+								href={profile.url}
 								target='_blank'
 								rel='noreferrer'
 								className='group flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'>
 								<span className='flex min-w-0 items-center gap-3'>
 									<Avatar className='h-9 w-9 border border-border'>
-										<AvatarImage src={profile.avatar_url} alt={profile.login} />
+										<AvatarImage src={profile.avatarUrl} alt={profile.login} />
 										<AvatarFallback className='text-xs'>
 											{(profile.name ?? profile.login).slice(0, 2).toUpperCase()}
 										</AvatarFallback>

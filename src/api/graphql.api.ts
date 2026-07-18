@@ -227,3 +227,6 @@ export function estimateAudienceCost(
 		willExceed: pointsNeeded > rateLimit.remaining - quotaBuffer(rateLimit)
 	};
 }
+
+export const delay = (ms: number) =>
+	new Promise((resolve) => setTimeout(resolve, ms));

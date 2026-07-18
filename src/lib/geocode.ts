@@ -1,11 +1,11 @@
-import { delay } from "../api/github";
+import type { GithubProfileNode } from "@/api/graphql.types";
 import { CN } from "../constants/countries";
 import { CDICT } from "../constants/lookupTables";
 import { SKIP } from "../constants/unlocated";
-import type { GithubProfile } from "../types/api.types";
+import { delay } from "@/api/graphql.api";
 
 export type GeocodeResult = {
-	usersByCountry: Map<string, GithubProfile[]>;
+	usersByCountry: Map<string, GithubProfileNode[]>;
 	profileCountryMap: Map<string, string>;
 	missingDictionaryMatches: Map<string, string | null>;
 	invalidOrSkippedLocations: Map<string, string>;
@@ -75,15 +75,16 @@ export const guessCountry = (locations: string[]) => {
 };
 
 export async function geocode(
-	rawData: GithubProfile[],
+	rawData: GithubProfileNode[],
 	onProgress: ({ done, total }: { done: number; total: number }) => void
 ): Promise<GeocodeResult> {
 	const profileCountryMap = new Map<string, string>();
 	const missingDictionaryMatches = new Map<string, string | null>();
 	const invalidOrSkippedLocations = new Map<string, string>();
-	const usersByCountry = new Map<string, GithubProfile[]>();
+	const usersByCountry = new Map<string, GithubProfileNode[]>();
 
 	const total = rawData.length;
+	const needDelay = total < 3000;
 
 	for (let i = 0; i < total; i++) {
 		const profile = rawData[i];
@@ -92,7 +93,7 @@ export async function geocode(
 			invalidOrSkippedLocations.set(profile.login, "EMPTY");
 
 			onProgress({ done: i + 1, total });
-			await delay(10);
+			if (needDelay) await delay(5);
 			continue;
 		}
 
@@ -115,7 +116,7 @@ export async function geocode(
 		}
 
 		onProgress({ done: i + 1, total });
-		await delay(10);
+		if (needDelay) await delay(5);
 	}
 
 	return {
