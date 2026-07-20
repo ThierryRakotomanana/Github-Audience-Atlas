@@ -20,7 +20,7 @@ import {
 	SheetTrigger
 } from "@/components/ui/sheet";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, List, Loader2, UsersRound } from "lucide-react";
+import { AlertTriangle, List, Loader2, UserRound } from "lucide-react";
 import { GithubIcon } from "@/components/icons/lucide-github";
 import { Separator } from "@/components/ui/separator";
 import type { Credentials } from "@/api/graphql.types";
@@ -45,6 +45,7 @@ function App() {
 	const { status, steps, error, pct, estimate, user, audience, resetAt } =
 		useAudience(credentials);
 
+	// Full state reset handler
 	const handleResetUser = () => {
 		setCountry(null);
 		setAudienceType("followers");
@@ -90,6 +91,16 @@ function App() {
 							<Separator orientation='vertical' />
 
 							<div className='flex items-center gap-1 sm:gap-2'>
+								<Button
+									variant='secondary'
+									size='sm'
+									onClick={handleResetUser}
+									title='Switch to another user'
+									className='h-8 px-2 sm:px-3 gap-1.5 text-xs text-muted-foreground hover:text-foreground'>
+									<UserRound className='h-4 w-4 shrink-0' />
+									<span className='hidden sm:inline font-medium'>Switch User</span>
+								</Button>
+
 								<a
 									href='https://github.com/ThierryRakotomanana/Github-Audience-Atlas'
 									target='_blank'
@@ -98,15 +109,6 @@ function App() {
 									aria-label='GitHub Repository'>
 									<GithubIcon />
 								</a>
-								<Button
-									variant='secondary'
-									size='sm'
-									onClick={handleResetUser}
-									title='Switch to another user'
-									className='h-8 px-2 sm:px-3 gap-1.5 text-xs text-muted-foreground hover:text-foreground'>
-									<UsersRound className='h-4 w-4 shrink-0' />
-									<span className='hidden sm:inline font-medium'>Switch User</span>
-								</Button>
 							</div>
 						</div>
 					</div>
