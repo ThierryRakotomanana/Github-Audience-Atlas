@@ -47,14 +47,6 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 	const deferredSearch = useDeferredValue(search);
 	const totalFollowers = data.length;
 
-	const searchKeyByLogin = useMemo(() => {
-		const map = new Map<string, string>();
-		for (const p of data) {
-			map.set(p.login, `${p.name ?? ""} ${p.login}`.toLowerCase());
-		}
-		return map;
-	}, [data]);
-
 	const usersByCountry = useMemo(() => {
 		return data.reduce((acc, user) => {
 			const code = user.country || UNKNOWN_REGION;
@@ -94,26 +86,31 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 		if (!selectedProfiles) return EMPTY_PROFILES;
 		if (!deferredSearch.trim()) return selectedProfiles;
 		const q = deferredSearch.trim().toLowerCase();
-		return selectedProfiles.filter((p) =>
-			(searchKeyByLogin.get(p.login) ?? "").includes(q)
-		);
-	}, [selectedProfiles, deferredSearch, searchKeyByLogin]);
+		return selectedProfiles.filter((p) => {
+			const loginMatch = p.login.toLowerCase().includes(q);
+			const nameMatch = p.name ? p.name.toLowerCase().includes(q) : false;
+			return loginMatch || nameMatch;
+		});
+	}, [selectedProfiles, deferredSearch]);
 
-	const searchLabel = country ? "Search followers" : "Search countries";
+	const isProfileView = selectedProfiles !== null;
+	const searchLabel = isProfileView ? "Search followers" : "Search countries";
 
-	const countryVirtualizer = useVirtualizer({
-		count: selectedProfiles === null ? filteredCountries.length : 0,
+	const virtualizer = useVirtualizer({
+		count: isProfileView ? filteredProfiles.length : filteredCountries.length,
 		getScrollElement: () => scrollParentRef.current,
-		estimateSize: () => COUNTRY_ROW_HEIGHT,
+		estimateSize: () => (isProfileView ? PROFILE_ROW_HEIGHT : COUNTRY_ROW_HEIGHT),
 		overscan: 8
 	});
 
-	const profileVirtualizer = useVirtualizer({
-		count: selectedProfiles !== null ? filteredProfiles.length : 0,
-		getScrollElement: () => scrollParentRef.current,
-		estimateSize: () => PROFILE_ROW_HEIGHT,
-		overscan: 8
-	});
+	function formatPercentage(count: number, total: number): string {
+		if (count <= 0 || total <= 0) return "0%";
+		const pct = (count / total) * 100;
+
+		if (pct < 0.1) return "<0.1%";
+		if (pct < 1) return `${pct.toFixed(1)}%`;
+		return `${Math.round(pct)}%`;
+	}
 
 	return (
 		<div className='flex h-full flex-col gap-4'>
@@ -126,7 +123,7 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 							isoCode={country}
 							className='h-5 w-7 shrink-0 rounded-sm border border-border/40'
 						/>
-						<div className='min-w-0 flex items-center gap-2'>
+						<div className='min-w-0 flex flex-col items-center gap-2'>
 							<button
 								type='button'
 								onClick={() => setCountry(null)}
@@ -168,14 +165,14 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 			<div
 				ref={scrollParentRef}
 				className='scrollbar-thin flex-1 overflow-y-auto pr-2 [scrollbar-color:var(--color-border)_transparent]'>
-				{selectedProfiles === null ?
+				{!isProfileView ?
 					filteredCountries.length > 0 ?
 						<div
 							style={{
-								height: countryVirtualizer.getTotalSize(),
+								height: virtualizer.getTotalSize(),
 								position: "relative"
 							}}>
-							{countryVirtualizer.getVirtualItems().map((virtualRow) => {
+							{virtualizer.getVirtualItems().map((virtualRow) => {
 								const [code, profiles] = filteredCountries[virtualRow.index];
 								return (
 									<button
@@ -205,8 +202,8 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 												<span className='truncate font-medium text-foreground'>
 													{getRegionName(code)}
 												</span>
-												<span className='text-xs text-muted-foreground'>
-													{Math.round((profiles.length / totalFollowers) * 100)}%
+												<span className='text-xs text-muted-foreground font-mono'>
+													{formatPercentage(profiles.length, totalFollowers)}
 												</span>
 											</span>
 										</span>
@@ -219,14 +216,14 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 								);
 							})}
 						</div>
-					:	<EmptyState text={`No countries match "${search}"`} />
+					:	<EmptyState text={`No countries match "${deferredSearch}"`} />
 				: filteredProfiles.length > 0 ?
 					<div
 						style={{
-							height: profileVirtualizer.getTotalSize(),
+							height: virtualizer.getTotalSize(),
 							position: "relative"
 						}}>
-						{profileVirtualizer.getVirtualItems().map((virtualRow) => {
+						{virtualizer.getVirtualItems().map((virtualRow) => {
 							const profile = filteredProfiles[virtualRow.index];
 							return (
 								<a
@@ -264,8 +261,9 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 							);
 						})}
 					</div>
-				:	<EmptyState text={`No followers match "${search}"`} />}
+				:	<EmptyState text={`No followers match "${deferredSearch}"`} />}
 			</div>
+
 			{!country && unknownCount > 0 && (
 				<>
 					<Separator />
