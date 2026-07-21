@@ -3,7 +3,6 @@ import { useState } from "react";
 import CredentialForm from "./components/CredentialForm";
 import { useAudience } from "./hooks/useAudience";
 import { useElementSize } from "./hooks/useElementSize";
-import type { Credentials } from "./types/api.types";
 
 import { LoadingView } from "./components/LoadingView";
 import { Stat } from "@/components/Stat";
@@ -24,6 +23,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, List, Loader2 } from "lucide-react";
 import { GithubIcon } from "@/components/icons/lucide-github";
 import { Separator } from "@/components/ui/separator";
+import type { Credentials } from "@/api/graphql.types";
 
 type AudienceType = "followers" | "following" | "ghosts";
 
@@ -56,7 +56,7 @@ function App() {
 				<header className='border-b border-border bg-card shrink-0'>
 					<div className='max-w-6xl mx-auto px-4 sm:px-6 py-1 flex items-center gap-3 sm:gap-4'>
 						<img
-							src={user.avatar_url}
+							src={user.avatarUrl}
 							alt={user.login}
 							className='w-8 h-8 rounded-full border border-border shrink-0'
 						/>
@@ -65,7 +65,7 @@ function App() {
 								{user.name ?? user.login}
 							</p>
 							<a
-								href={user.html_url}
+								href={user.url}
 								target='_blank'
 								rel='noreferrer'
 								className='text-xs text-muted-foreground font-mono hover:text-foreground transition-colors'>
@@ -73,8 +73,8 @@ function App() {
 							</a>
 						</div>
 						<div className='flex items-center gap-4 sm:gap-6 shrink-0'>
-							<Stat label='Followers' value={user.followers} />
-							<Stat label='Following' value={user.following} />
+							<Stat label='Followers' value={user.followersCount} />
+							<Stat label='Following' value={user.followingCount} />
 							<Separator orientation='vertical' />
 							<a
 								href={
@@ -138,7 +138,7 @@ function App() {
 						<AlertTriangle className='h-4 w-4' />
 						<AlertTitle>Approaching rate limit</AlertTitle>
 						<AlertDescription className='text-warning-foreground/90'>
-							{estimate.remaining} requests remaining, {estimate.requestsNeeded}{" "}
+							{estimate.remaining} requests remaining, {estimate.pointsNeeded}{" "}
 							needed to finish.{" "}
 							{estimate.willExceed ?
 								"This will likely exceed your quota."

@@ -1,6 +1,6 @@
+import type { LocalizedGithubProfile } from "@/api/graphql.types";
 import { useGeoJson } from "@/hooks/useGeoJson";
 import { MAP_BASE_STYLING } from "@/lib/getCountryColor";
-import type { LocalizedGithubProfile } from "@/types/api.types";
 import { geoNaturalEarth1, geoPath } from "d3-geo";
 import { scaleLog } from "d3-scale";
 import type { Geometry } from "geojson";

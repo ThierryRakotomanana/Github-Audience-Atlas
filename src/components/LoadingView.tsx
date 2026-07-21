@@ -1,7 +1,7 @@
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, Loader2, CircleDashed } from "lucide-react";
-import type { Step } from "../types/api.types";
+import type { Step } from "@/api/graphql.types";
 
 function StepIcon({ status }: { status: Step["status"] }) {
 	if (status === "done") {
