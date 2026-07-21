@@ -1,3 +1,23 @@
+## 0.2.0
+
+### Minor Changes
+
+- update ui theme and refactor components [made by [@ThierryRakotomanana](https://github.com/ThierryRakotomanana) full details in [#19](https://github.com/ThierryRakotomanana/Github-Audience-Atlas/pull/19)]
+
+- feat: add button to switch to another user & increase the concurrency request [made by [@ThierryRakotomanana](https://github.com/ThierryRakotomanana) full details in [#26](https://github.com/ThierryRakotomanana/Github-Audience-Atlas/pull/26)]
+
+- feat(api): migrate to GraphQL with REST fallback and reconciliation layer [made by [@ThierryRakotomanana](https://github.com/ThierryRakotomanana) full details in [#25](https://github.com/ThierryRakotomanana/Github-Audience-Atlas/pull/25)]
+
+- feat: add github icon link that targets the repos [made by [@ThierryRakotomanana](https://github.com/ThierryRakotomanana) full details in [#17](https://github.com/ThierryRakotomanana/Github-Audience-Atlas/pull/17)]
+
+- feat: let user to choose between using his PAT or use the demos token [made by [@ThierryRakotomanana](https://github.com/ThierryRakotomanana) full details in [#28](https://github.com/ThierryRakotomanana/Github-Audience-Atlas/pull/28)]
+
+### Patch Changes
+
+- perf: virtualize audience list as it freeze for a large one [made by [@ThierryRakotomanana](https://github.com/ThierryRakotomanana) full details in [#27](https://github.com/ThierryRakotomanana/Github-Audience-Atlas/pull/27)]
+
+- ci: increase the timeout of the ai response [made by [@ThierryRakotomanana](https://github.com/ThierryRakotomanana) full details in [#20](https://github.com/ThierryRakotomanana/Github-Audience-Atlas/pull/20)]
+
 ## 0.1.0
 
 ### Minor Changes
