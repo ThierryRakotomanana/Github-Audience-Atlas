@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useReducer } from "react";
 
 import CredentialForm from "./components/CredentialForm";
 import { useAudience } from "./hooks/useAudience";
@@ -20,7 +20,7 @@ import {
 	SheetTrigger
 } from "@/components/ui/sheet";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, List, Loader2 } from "lucide-react";
+import { AlertTriangle, List, Loader2, UserRound } from "lucide-react";
 import { GithubIcon } from "@/components/icons/lucide-github";
 import { Separator } from "@/components/ui/separator";
 import type { Credentials } from "@/api/graphql.types";
@@ -33,19 +33,56 @@ const AUDIENCE_TABS: { value: AudienceType; label: string }[] = [
 	{ value: "ghosts", label: "Ghost Zone" }
 ];
 
+type AppState = {
+	country: string | null;
+	audienceType: AudienceType;
+	credentials: Credentials;
+};
+
+type AppAction =
+	| { type: "SET_COUNTRY"; payload: string | null }
+	| { type: "SET_AUDIENCE_TYPE"; payload: AudienceType }
+	| { type: "SET_CREDENTIALS"; payload: Credentials }
+	| { type: "RESET_USER" };
+
+const initialState: AppState = {
+	country: null,
+	audienceType: "followers",
+	credentials: { user: "", token: "" }
+};
+
+function appReducer(state: AppState, action: AppAction): AppState {
+	switch (action.type) {
+		case "SET_COUNTRY":
+			return { ...state, country: action.payload };
+		case "SET_AUDIENCE_TYPE":
+			return { ...state, audienceType: action.payload, country: null }; // Clears country on tab switch
+		case "SET_CREDENTIALS":
+			return { ...state, credentials: action.payload };
+		case "RESET_USER":
+			return initialState;
+		default:
+			return state;
+	}
+}
+
 function App() {
-	const [country, setCountry] = useState<string | null>(null);
-	const [audienceType, setAudienceType] = useState<AudienceType>("followers");
-	const [credentials, setCredentials] = useState<Credentials>({
-		user: "",
-		token: ""
-	});
+	const [{ country, audienceType, credentials }, dispatch] = useReducer(
+		appReducer,
+		initialState
+	);
 
 	const { ref: mapContainerRef, size } = useElementSize<HTMLDivElement>();
 	const { status, steps, error, pct, estimate, user, audience, resetAt } =
 		useAudience(credentials);
 
-	const isAuthorized = Boolean(credentials.user && credentials.token);
+	const handleResetUser = () => dispatch({ type: "RESET_USER" });
+	const setCountry = (c: string | null) =>
+		dispatch({ type: "SET_COUNTRY", payload: c });
+	const setCredentials = (creds: Credentials) =>
+		dispatch({ type: "SET_CREDENTIALS", payload: creds });
+
+	const isAuthorized = Boolean(credentials.user);
 	if (!isAuthorized) return <CredentialForm onSubmit={setCredentials} />;
 
 	const currentAudience = audience?.[audienceType];
@@ -54,37 +91,55 @@ function App() {
 		<div className='h-screen w-screen overflow-hidden bg-background flex flex-col'>
 			{user && (
 				<header className='border-b border-border bg-card shrink-0'>
-					<div className='max-w-6xl mx-auto px-4 sm:px-6 py-1 flex items-center gap-3 sm:gap-4'>
-						<img
-							src={user.avatarUrl}
-							alt={user.login}
-							className='w-8 h-8 rounded-full border border-border shrink-0'
-						/>
-						<div className='flex-1 min-w-0'>
-							<p className='text-sm font-medium text-card-foreground truncate'>
-								{user.name ?? user.login}
-							</p>
-							<a
-								href={user.url}
-								target='_blank'
-								rel='noreferrer'
-								className='text-xs text-muted-foreground font-mono hover:text-foreground transition-colors'>
-								@{user.login}
-							</a>
+					<div className='max-w-6xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-between gap-3 sm:gap-4'>
+						<div className='flex items-center gap-3 min-w-0'>
+							<img
+								src={user.avatarUrl}
+								alt={user.login}
+								className='w-8 h-8 rounded-full border border-border shrink-0'
+							/>
+							<div className='flex-1 min-w-0'>
+								<p className='text-sm font-medium text-card-foreground truncate leading-tight'>
+									{user.name ?? user.login}
+								</p>
+								<a
+									href={user.url}
+									target='_blank'
+									rel='noreferrer'
+									className='text-xs text-muted-foreground font-mono hover:text-foreground transition-colors block truncate'>
+									@{user.login}
+								</a>
+							</div>
 						</div>
-						<div className='flex items-center gap-4 sm:gap-6 shrink-0'>
-							<Stat label='Followers' value={user.followersCount} />
-							<Stat label='Following' value={user.followingCount} />
+
+						<div className='flex items-center gap-3 sm:gap-4 shrink-0'>
+							<div className='flex items-center gap-3 sm:gap-6'>
+								<Stat label='Followers' value={user.followersCount} />
+								<Stat label='Following' value={user.followingCount} />
+							</div>
+
 							<Separator orientation='vertical' />
-							<a
-								href={
-									"https://github.com/ThierryRakotomanana/Github-Audience-Atlas"
-								}
-								target='_blank'
-								rel='noreferrer'
-								className='text-xs text-muted-foreground font-mono hover:text-foreground transition-colors'>
-								<GithubIcon />
-							</a>
+
+							<div className='flex items-center gap-1 sm:gap-2'>
+								<Button
+									variant='secondary'
+									size='sm'
+									onClick={handleResetUser}
+									title='Switch to another user'
+									className='h-8 px-2 sm:px-3 gap-1.5 text-xs text-muted-foreground hover:text-foreground'>
+									<UserRound className='h-4 w-4 shrink-0' />
+									<span className='hidden sm:inline font-medium'>Switch User</span>
+								</Button>
+
+								<a
+									href='https://github.com/ThierryRakotomanana/Github-Audience-Atlas'
+									target='_blank'
+									rel='noreferrer'
+									className='p-2 text-muted-foreground hover:text-foreground transition-colors'
+									aria-label='GitHub Repository'>
+									<GithubIcon />
+								</a>
+							</div>
 						</div>
 					</div>
 				</header>
@@ -95,7 +150,9 @@ function App() {
 					<div className='max-w-6xl mx-auto px-4 sm:px-6 py-1 flex items-center justify-between gap-3'>
 						<Tabs
 							value={audienceType}
-							onValueChange={(v) => setAudienceType(v as AudienceType)}>
+							onValueChange={(v) =>
+								dispatch({ type: "SET_AUDIENCE_TYPE", payload: v as AudienceType })
+							}>
 							<TabsList className='bg-muted'>
 								{AUDIENCE_TABS.map((tab) => (
 									<TabsTrigger key={tab.value} value={tab.value}>
@@ -149,11 +206,7 @@ function App() {
 			)}
 
 			{status === "error" && error && (
-				<ErrorView
-					message={error}
-					resetAt={resetAt}
-					onRetry={() => setCredentials({ user: "", token: "" })}
-				/>
+				<ErrorView message={error} resetAt={resetAt} onRetry={handleResetUser} />
 			)}
 
 			{status === "success" && currentAudience && (

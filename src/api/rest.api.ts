@@ -204,7 +204,7 @@ async function mapWithConcurrency<T, R>(
 	return results;
 }
 
-export const BACKFILL_CONCURRENCY = 4;
+export const BACKFILL_CONCURRENCY = 20;
 
 export const fetchProfilesByLoginRest = async (
 	logins: string[],
