@@ -95,3 +95,24 @@ export type CostEstimate = {
 	remaining: number;
 	willExceed: boolean;
 };
+
+export interface AllAudienceResult {
+	nodes: GithubProfileNode[];
+	totalCount: number;
+}
+
+export type ReconcileStage = "graphql" | "rest" | "backfill";
+
+export interface ReconciledAudienceResult {
+	nodes: GithubProfileNode[];
+	graphqlTotalCount: number;
+	restTotalCount: number;
+	recoveredLogins: string[];
+	unresolvedLogins: string[];
+}
+
+export interface ReconciliationCostEstimate {
+	graphqlPoints: number;
+	restRequests: number;
+	worstCaseBackfillPoints: number;
+}
