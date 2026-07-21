@@ -35,6 +35,7 @@
 		"@octokit/graphql": "^9.0.3",
 		"@octokit/rest": "^22.0.1",
 		"@tailwindcss/vite": "^4.3.0",
+		"@tanstack/react-virtual": "^3.14.7",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"country-flag-icons": "^1.6.20",
