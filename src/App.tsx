@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useReducer } from "react";
 
 import CredentialForm from "./components/CredentialForm";
 import { useAudience } from "./hooks/useAudience";
@@ -33,24 +33,54 @@ const AUDIENCE_TABS: { value: AudienceType; label: string }[] = [
 	{ value: "ghosts", label: "Ghost Zone" }
 ];
 
+type AppState = {
+	country: string | null;
+	audienceType: AudienceType;
+	credentials: Credentials;
+};
+
+type AppAction =
+	| { type: "SET_COUNTRY"; payload: string | null }
+	| { type: "SET_AUDIENCE_TYPE"; payload: AudienceType }
+	| { type: "SET_CREDENTIALS"; payload: Credentials }
+	| { type: "RESET_USER" };
+
+const initialState: AppState = {
+	country: null,
+	audienceType: "followers",
+	credentials: { user: "", token: "" }
+};
+
+function appReducer(state: AppState, action: AppAction): AppState {
+	switch (action.type) {
+		case "SET_COUNTRY":
+			return { ...state, country: action.payload };
+		case "SET_AUDIENCE_TYPE":
+			return { ...state, audienceType: action.payload, country: null }; // Clears country on tab switch
+		case "SET_CREDENTIALS":
+			return { ...state, credentials: action.payload };
+		case "RESET_USER":
+			return initialState;
+		default:
+			return state;
+	}
+}
+
 function App() {
-	const [country, setCountry] = useState<string | null>(null);
-	const [audienceType, setAudienceType] = useState<AudienceType>("followers");
-	const [credentials, setCredentials] = useState<Credentials>({
-		user: "",
-		token: ""
-	});
+	const [{ country, audienceType, credentials }, dispatch] = useReducer(
+		appReducer,
+		initialState
+	);
 
 	const { ref: mapContainerRef, size } = useElementSize<HTMLDivElement>();
 	const { status, steps, error, pct, estimate, user, audience, resetAt } =
 		useAudience(credentials);
 
-	// Full state reset handler
-	const handleResetUser = () => {
-		setCountry(null);
-		setAudienceType("followers");
-		setCredentials({ user: "", token: "" });
-	};
+	const handleResetUser = () => dispatch({ type: "RESET_USER" });
+	const setCountry = (c: string | null) =>
+		dispatch({ type: "SET_COUNTRY", payload: c });
+	const setCredentials = (creds: Credentials) =>
+		dispatch({ type: "SET_CREDENTIALS", payload: creds });
 
 	const isAuthorized = Boolean(credentials.user);
 	if (!isAuthorized) return <CredentialForm onSubmit={setCredentials} />;
@@ -120,7 +150,9 @@ function App() {
 					<div className='max-w-6xl mx-auto px-4 sm:px-6 py-1 flex items-center justify-between gap-3'>
 						<Tabs
 							value={audienceType}
-							onValueChange={(v) => setAudienceType(v as AudienceType)}>
+							onValueChange={(v) =>
+								dispatch({ type: "SET_AUDIENCE_TYPE", payload: v as AudienceType })
+							}>
 							<TabsList className='bg-muted'>
 								{AUDIENCE_TABS.map((tab) => (
 									<TabsTrigger key={tab.value} value={tab.value}>
