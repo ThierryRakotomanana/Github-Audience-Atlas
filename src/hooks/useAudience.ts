@@ -195,7 +195,7 @@ export function useAudience(credentials: Credentials): UseAudienceReturn {
 
 			try {
 				const tokenPool = new TokenPool(
-					`${import.meta.env.VITE_DEMO_GITHUB_TOKENS},${credentials.token}`
+					`${import.meta.env.VITE_DEMO_GITHUB_TOKENS ?? ""},${credentials.token}`
 						.split(",")
 						.map((t: string) => t.trim())
 						.filter(Boolean)
@@ -296,8 +296,10 @@ export function useAudience(credentials: Credentials): UseAudienceReturn {
 					uniqueProfiles.set(profile.login, profile);
 				}
 
+				if (signal.aborted) return;
+
 				updateStep("geocode", { status: "active", detail: "computing…" });
-				const { profileCountryMap } = await geocode(
+				const result = await geocode(
 					[...uniqueProfiles.values()],
 					({ done, total }) => {
 						updateStep("geocode", { detail: `${done} / ${total}` });
@@ -305,8 +307,13 @@ export function useAudience(credentials: Credentials): UseAudienceReturn {
 							type: "PROGRESS",
 							pct: 40 + Math.round((done / total) * 60)
 						});
-					}
+					},
+					signal
 				);
+
+				if (!result) return;
+
+				const { profileCountryMap } = result;
 
 				updateStep("geocode", { status: "done" });
 
@@ -358,8 +365,9 @@ export function useAudience(credentials: Credentials): UseAudienceReturn {
 		runFetch(credentials, controller.signal, true);
 	}, [credentials, runFetch]);
 
+	const { user } = credentials;
+
 	useEffect(() => {
-		const { user } = credentials;
 		if (!user) {
 			controllerRef.current?.abort();
 			dispatch({ type: "RESET" });
@@ -372,7 +380,7 @@ export function useAudience(credentials: Credentials): UseAudienceReturn {
 		return () => {
 			controller.abort();
 		};
-	}, [credentials, runFetch]);
+	}, [user, credentials, runFetch]);
 
 	return { ...state, abort, proceed };
 }
