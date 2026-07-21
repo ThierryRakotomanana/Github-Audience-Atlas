@@ -1,4 +1,10 @@
-import { useDeferredValue, useMemo, useRef, useState } from "react";
+import {
+	useDeferredValue,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState
+} from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ExternalLink, Search, X } from "lucide-react";
 import { CountryFlag } from "@/components/CountryFlag";
@@ -31,6 +37,12 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 		setPrevCountry(country);
 		setSearch("");
 	}
+
+	useLayoutEffect(() => {
+		if (scrollParentRef.current) {
+			scrollParentRef.current.scrollTop = 0;
+		}
+	}, [country]);
 
 	const deferredSearch = useDeferredValue(search);
 	const totalFollowers = data.length;
@@ -88,6 +100,7 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 	}, [selectedProfiles, deferredSearch, searchKeyByLogin]);
 
 	const searchLabel = country ? "Search followers" : "Search countries";
+
 	const countryVirtualizer = useVirtualizer({
 		count: selectedProfiles === null ? filteredCountries.length : 0,
 		getScrollElement: () => scrollParentRef.current,
@@ -113,7 +126,7 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 							isoCode={country}
 							className='h-5 w-7 shrink-0 rounded-sm border border-border/40'
 						/>
-						<div className='min-w-0'>
+						<div className='min-w-0 flex items-center gap-2'>
 							<button
 								type='button'
 								onClick={() => setCountry(null)}
@@ -126,16 +139,14 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 							<Badge
 								variant='outline'
 								className='shrink-0 font-mono text-xs font-normal bg-muted/40 text-muted-foreground'>
-								{country ?
-									`${selectedProfiles?.length ?? 0} followers`
-								:	`${sortedCountries.length} regions`}
+								{selectedProfiles?.length ?? 0} followers
 							</Badge>
 						</div>
 					</div>
 				:	<Badge
 						variant='outline'
 						className='shrink-0 font-mono text-xs font-normal bg-muted/40 text-muted-foreground'>
-						{sortedCountries.length} country
+						{sortedCountries.length} countries
 					</Badge>
 				}
 			</div>
@@ -253,8 +264,6 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 							);
 						})}
 					</div>
-				: selectedProfiles && selectedProfiles.length === 0 ?
-					<EmptyState text='No followers from this region yet.' />
 				:	<EmptyState text={`No followers match "${search}"`} />}
 			</div>
 			{!country && unknownCount > 0 && (
