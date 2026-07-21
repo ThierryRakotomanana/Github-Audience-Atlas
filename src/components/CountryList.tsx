@@ -25,8 +25,16 @@ interface CountryListProps {
 }
 
 const EMPTY_PROFILES: LocalizedGithubProfile[] = [];
-const COUNTRY_ROW_HEIGHT = 56;
-const PROFILE_ROW_HEIGHT = 60;
+const COUNTRY_ROW_HEIGHT = 58;
+const PROFILE_ROW_HEIGHT = 64;
+
+function formatPercentage(count: number, total: number): string {
+	if (count <= 0 || total <= 0) return "0%";
+	const pct = (count / total) * 100;
+	if (pct < 0.1) return "<0.1%";
+	if (pct < 1) return `${pct.toFixed(1)}%`;
+	return `${Math.round(pct)}%`;
+}
 
 export function CountryList({ data, country, setCountry }: CountryListProps) {
 	const [search, setSearch] = useState("");
@@ -38,13 +46,14 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 		setSearch("");
 	}
 
+	const deferredSearch = useDeferredValue(search);
+
 	useLayoutEffect(() => {
 		if (scrollParentRef.current) {
 			scrollParentRef.current.scrollTop = 0;
 		}
-	}, [country]);
+	}, [country, deferredSearch]);
 
-	const deferredSearch = useDeferredValue(search);
 	const totalFollowers = data.length;
 
 	const usersByCountry = useMemo(() => {
@@ -103,15 +112,6 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 		overscan: 8
 	});
 
-	function formatPercentage(count: number, total: number): string {
-		if (count <= 0 || total <= 0) return "0%";
-		const pct = (count / total) * 100;
-
-		if (pct < 0.1) return "<0.1%";
-		if (pct < 1) return `${pct.toFixed(1)}%`;
-		return `${Math.round(pct)}%`;
-	}
-
 	return (
 		<div className='flex h-full flex-col gap-4'>
 			<div className='flex items-center justify-between gap-2'>
@@ -123,7 +123,7 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 							isoCode={country}
 							className='h-5 w-7 shrink-0 rounded-sm border border-border/40'
 						/>
-						<div className='min-w-0 flex flex-col items-center gap-2'>
+						<div className='min-w-0 flex items-center flex-col gap-2'>
 							<button
 								type='button'
 								onClick={() => setCountry(null)}
@@ -175,44 +175,49 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 							{virtualizer.getVirtualItems().map((virtualRow) => {
 								const [code, profiles] = filteredCountries[virtualRow.index];
 								return (
-									<button
+									<div
 										key={code}
-										type='button'
-										onClick={() => setCountry(code)}
 										style={{
 											position: "absolute",
 											top: 0,
 											left: 0,
 											width: "100%",
 											height: `${virtualRow.size}px`,
-											transform: `translateY(${virtualRow.start}px)`
-										}}
-										className='group flex items-center justify-between overflow-hidden rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'>
-										<span
-											aria-hidden
-											className='absolute inset-y-0 left-0 bg-primary/10 transition-all group-hover:bg-primary/15'
-											style={{ width: `${(profiles.length / maxCount) * 100}%` }}
-										/>
-										<span className='relative z-10 flex min-w-0 items-center gap-3'>
-											<RegionIcon
-												code={code}
-												className='h-4 w-6 shrink-0 rounded-sm border border-border/40'
+											transform: `translateY(${virtualRow.start}px)`,
+											paddingBottom: "6px"
+										}}>
+										<button
+											type='button'
+											onClick={() => setCountry(code)}
+											className='group relative flex h-full w-full items-center justify-between overflow-hidden rounded-lg border border-transparent bg-card/50 px-3 py-2 text-left text-sm transition-all hover:bg-muted/60 hover:border-border/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'>
+											<span
+												aria-hidden
+												className='absolute inset-y-0 left-0 bg-primary/10 transition-all group-hover:bg-primary/15'
+												style={{
+													width: `${(profiles.length / maxCount) * 100}%`
+												}}
 											/>
-											<span className='flex min-w-0 flex-col'>
-												<span className='truncate font-medium text-foreground'>
-													{getRegionName(code)}
-												</span>
-												<span className='text-xs text-muted-foreground font-mono'>
-													{formatPercentage(profiles.length, totalFollowers)}
+											<span className='relative z-10 flex min-w-0 items-center gap-3'>
+												<RegionIcon
+													code={code}
+													className='h-4 w-6 shrink-0 rounded-sm border border-border/40'
+												/>
+												<span className='flex min-w-0 flex-col'>
+													<span className='truncate font-medium text-foreground'>
+														{getRegionName(code)}
+													</span>
+													<span className='text-xs font-mono text-muted-foreground'>
+														{formatPercentage(profiles.length, totalFollowers)}
+													</span>
 												</span>
 											</span>
-										</span>
-										<Badge
-											variant='secondary'
-											className='relative z-10 shrink-0 font-mono text-xs'>
-											{profiles.length}
-										</Badge>
-									</button>
+											<Badge
+												variant='secondary'
+												className='relative z-10 shrink-0 font-mono text-xs'>
+												{profiles.length}
+											</Badge>
+										</button>
+									</div>
 								);
 							})}
 						</div>
@@ -226,38 +231,43 @@ export function CountryList({ data, country, setCountry }: CountryListProps) {
 						{virtualizer.getVirtualItems().map((virtualRow) => {
 							const profile = filteredProfiles[virtualRow.index];
 							return (
-								<a
+								<div
 									key={profile.id}
-									href={profile.url}
-									target='_blank'
-									rel='noreferrer'
 									style={{
 										position: "absolute",
 										top: 0,
 										left: 0,
 										width: "100%",
 										height: `${virtualRow.size}px`,
-										transform: `translateY(${virtualRow.start}px)`
-									}}
-									className='group flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'>
-									<span className='flex min-w-0 items-center gap-3'>
-										<Avatar className='h-9 w-9 border border-border'>
-											<AvatarImage src={profile.avatarUrl} alt={profile.login} />
-											<AvatarFallback className='text-xs'>
-												{(profile.name ?? profile.login).slice(0, 2).toUpperCase()}
-											</AvatarFallback>
-										</Avatar>
-										<span className='flex min-w-0 flex-col'>
-											<span className='truncate font-medium text-foreground'>
-												{profile.name ?? profile.login}
-											</span>
-											<span className='truncate font-mono text-xs text-muted-foreground'>
-												@{profile.login}
+										transform: `translateY(${virtualRow.start}px)`,
+										paddingBottom: "6px"
+									}}>
+									<a
+										href={profile.url}
+										target='_blank'
+										rel='noreferrer'
+										className='group flex h-full w-full items-center justify-between gap-3 rounded-lg border border-transparent bg-card/50 px-3 py-2 text-sm transition-all hover:bg-muted/60 hover:border-border/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'>
+										<span className='flex min-w-0 items-center gap-3'>
+											<Avatar className='h-8 w-8 border border-border'>
+												<AvatarImage src={profile.avatarUrl} alt={profile.login} />
+												<AvatarFallback className='text-xs'>
+													{(profile.name ?? profile.login)
+														.slice(0, 2)
+														.toUpperCase()}
+												</AvatarFallback>
+											</Avatar>
+											<span className='flex min-w-0 flex-col'>
+												<span className='truncate font-medium text-foreground'>
+													{profile.name ?? profile.login}
+												</span>
+												<span className='truncate font-mono text-xs text-muted-foreground'>
+													@{profile.login}
+												</span>
 											</span>
 										</span>
-									</span>
-									<ExternalLink className='h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100' />
-								</a>
+										<ExternalLink className='h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100' />
+									</a>
+								</div>
 							);
 						})}
 					</div>
