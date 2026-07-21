@@ -84,39 +84,38 @@ export async function geocode(
 	const usersByCountry = new Map<string, GithubProfileNode[]>();
 
 	const total = rawData.length;
-	const needDelay = total < 3000;
+	const YIELD_BATCH_SIZE = 100;
 
 	for (let i = 0; i < total; i++) {
 		const profile = rawData[i];
 		const clean = cleanLoc(profile.location);
 		if (clean.length === 0) {
 			invalidOrSkippedLocations.set(profile.login, "EMPTY");
-
-			onProgress({ done: i + 1, total });
-			if (needDelay) await delay(5);
-			continue;
-		}
-
-		const country = guessCountry(clean);
-		const locationKey = clean.join("|");
-
-		if (country === "SKIP") {
-			invalidOrSkippedLocations.set(locationKey, "SKIP");
-		} else if (country === null) {
-			missingDictionaryMatches.set(profile.login, profile.location);
 		} else {
-			profileCountryMap.set(profile.login, country);
+			const country = guessCountry(clean);
+			const locationKey = clean.join("|");
 
-			let regionalUsers = usersByCountry.get(country);
-			if (!regionalUsers) {
-				regionalUsers = [];
-				usersByCountry.set(country, regionalUsers);
+			if (country === "SKIP") {
+				invalidOrSkippedLocations.set(locationKey, "SKIP");
+			} else if (country === null) {
+				missingDictionaryMatches.set(profile.login, profile.location);
+			} else {
+				profileCountryMap.set(profile.login, country);
+
+				let regionalUsers = usersByCountry.get(country);
+				if (!regionalUsers) {
+					regionalUsers = [];
+					usersByCountry.set(country, regionalUsers);
+				}
+				regionalUsers.push(profile);
 			}
-			regionalUsers.push(profile);
 		}
 
 		onProgress({ done: i + 1, total });
-		if (needDelay) await delay(5);
+
+		if ((i + 1) % YIELD_BATCH_SIZE === 0) {
+			await delay(0);
+		}
 	}
 
 	return {

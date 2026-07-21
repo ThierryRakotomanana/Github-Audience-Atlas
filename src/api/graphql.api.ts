@@ -255,16 +255,20 @@ export const fetchAllAudience = async (
 		totalCount = audience.totalCount;
 		onProgress?.(collected.size, totalCount);
 
-		const nextCursor = audience.pageInfo.endCursor;
-		const cursorAdvanced = nextCursor !== null && nextCursor !== after;
-		if (!cursorAdvanced) {
-			if (audience.pageInfo.hasNextPage) {
-				console.warn(
-					`[github-audience] ${audienceType} page for "${login}" reported hasNextPage=true with a non-advancing cursor; stopping pagination early. This matches a known GitHub GraphQL API pagination bug (github/community#30687).`
-				);
-			}
+		if (!audience.pageInfo.hasNextPage) {
 			break;
 		}
+
+		const nextCursor = audience.pageInfo.endCursor;
+		const cursorAdvanced = nextCursor !== null && nextCursor !== after;
+
+		if (!cursorAdvanced) {
+			console.warn(
+				`[github-audience] ${audienceType} page for "${login}" reported hasNextPage=true with a non-advancing cursor; stopping pagination early. This matches a known GitHub GraphQL API pagination bug (github/community#30687).`
+			);
+			break;
+		}
+
 		after = nextCursor;
 	}
 

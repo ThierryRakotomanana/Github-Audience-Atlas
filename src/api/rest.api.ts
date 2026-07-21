@@ -222,6 +222,11 @@ export const fetchProfilesByLoginRest = async (
 			else unresolved.push(login);
 		} catch (error) {
 			if (error instanceof AllTokensExhaustedError) throw error;
+
+			if (error instanceof Error && error.name === "AbortError") {
+				throw error;
+			}
+
 			unresolved.push(login);
 		}
 	});
